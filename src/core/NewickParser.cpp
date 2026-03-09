@@ -1,46 +1,89 @@
 #include "NewickParser.h"
+#include <stdexcept>
 
-NewickParser::NewickParser() {}
+NewickParser::NewickParser(std::string stringTree, int labelsAmount) {
+    this->stringTree = std::move(stringTree);
+    this->stringTreeSize = this->stringTree.size();
+    this->labelsAmount = labelsAmount;
+    this->nodeId = labelsAmount + 1;
+    this->maxNodes = 2 * labelsAmount + 1;
+}
 
 NewickParser::~NewickParser(){}
 
-Tree NewickParser::parse(std::string stringTree, int labels) {
-    this->index = 0;
-    this->nodesAmount = 0;
-    this->stringTree = stringTree;
+Forest* NewickParser::parse() {
+    this->adj.assign(maxNodes, {-1, -1});
+    this->parent.assign(maxNodes, -1);
 
-    Node* root = parseNode();
-    
-    return Tree(root, nodesAmount, labels);
+    parseNodeWithParent(-1);
+    skipWhitespace();
+
+    if (index < static_cast<int>(this->stringTree.size()) && this->stringTree[index] == ';') {
+        index++;
+    } else {
+        throw std::runtime_error("Invalid Newick: missing ';' terminator");
+    }
+
+    this->adj.resize(nodeId);
+    this->parent.resize(nodeId);
+
+    return new Forest(this->adj, this->parent, labelsAmount);
 }
 
-Node* NewickParser::parseNode() {
+int NewickParser::parseNodeWithParent(int parentId) {
+    skipWhitespace();
+    if (index >= stringTreeSize) {
+        throw std::runtime_error("Invalid Newick: unexpected end of input");
+    }
 
     if (stringTree[index] == '(') {
-        index++;
-        Node* left = parseNode();
+        int currentNodeId = nodeId++;
+        parent[currentNodeId] = parentId;
 
-        index++; // consume ,
+        index++; // consume '('
+        int leftId = parseNodeWithParent(currentNodeId);
 
-        Node* right = parseNode();
+        skipWhitespace();
+        if (index >= stringTreeSize || stringTree[index] != ',') {
+            throw std::runtime_error("Invalid Newick: expected ','");
+        }
+        index++; // consume ','
 
-        index++; // consume )
+        int rightId = parseNodeWithParent(currentNodeId);
 
-        Node* node = new Node(left, right);
-        this->nodesAmount++;
+        skipWhitespace();
+        if (index >= stringTreeSize || stringTree[index] != ')') {
+            throw std::runtime_error("Invalid Newick: expected ')'");
+        }
+        index++; // consume ')'
 
-        return node;
+        adj[currentNodeId].first = leftId;
+        adj[currentNodeId].second = rightId;
+
+        return currentNodeId;
+    }
+
+    int label = getCurrentValue();
+    parent[label] = parentId;
+    return label;
+}
+
+int NewickParser::getCurrentValue() {
+    skipWhitespace();
+    if (index >= stringTreeSize || !std::isdigit(static_cast<unsigned char>(stringTree[index]))) {
+        throw std::runtime_error("Invalid Newick: expected numeric label");
     }
 
     int value = 0;
-    while (index < stringTree.size() && isdigit((unsigned char)stringTree[index])) {
+    while (index < stringTreeSize and std::isdigit((unsigned char)stringTree[index])) {
         value = value * 10 + (stringTree[index] - '0');
         ++index;
     }
+    return value;
+}
 
-    Node* leaf = new Node();
-    leaf->label = value;
-    this->nodesAmount++;
-    return leaf;
-
+void NewickParser::skipWhitespace() {
+    while (index < stringTreeSize && std::isspace(static_cast<unsigned char>(stringTree[index]))) {
+        ++index;
+    }
 }

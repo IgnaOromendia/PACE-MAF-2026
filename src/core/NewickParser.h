@@ -1,22 +1,28 @@
 #ifndef NEWICKPARSER_H
 #define NEWICKPARSER_H
 
+#include <cctype>
 #include <string>
-#include "Tree.h"
+#include "../model/Forest.h"
 
 class NewickParser{
 private:
-    int index;
-    int nodesAmount;
-    std::string stringTree;
+    int index = 0;
+    int nodeId, labelsAmount, stringTreeSize, maxNodes;
 
-    Node* parseNode();
+    std::string stringTree;
+    std::vector<std::pair<int,int>> adj;
+    std::vector<int> parent;
+
+    int parseNodeWithParent(int parentId);
+    int getCurrentValue();
+    void skipWhitespace();
 
 public:
-    NewickParser();
+    NewickParser(std::string stringTree, int labels);
     ~NewickParser();
 
-    Tree parse(std::string stringTree, int labels);
+    Forest* parse();
 };
 
 #endif

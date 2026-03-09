@@ -7,7 +7,7 @@
 #include <sstream>
 #include <vector>
 
-#include "Tree.h"
+#include "../model/Forest.h"
 
 class Instance {
 private:
@@ -17,7 +17,7 @@ private:
 
     int treesAmount, labelsAmount;
     
-    std::vector<Tree> newickTrees;
+    std::vector<Forest*> newickTrees;
 
     void unquote(std::string& text);
     void trim(std::string& text);

@@ -7,10 +7,10 @@ Instance::Instance(std::string fileName) {
     if (!inputFile) std::cerr << "Input file error\n";
 
     std::string line, tag, key, value;
-    NewickParser newickParser;
 
     while (std::getline(inputFile, line)) {
-        if (line.rfind("#x", 0) == 0) continue;
+        trim(line);
+        if (line.empty()) continue;
 
         std::istringstream iss(line);
         
@@ -29,8 +29,12 @@ Instance::Instance(std::string fileName) {
         } else if (line.rfind("#p", 0) == 0) {
             iss >> tag >> treesAmount >> labelsAmount;
             newickTrees.reserve(treesAmount);
+        } else if (line[0] == '#') {
+            continue;
         } else {
-            newickTrees.push_back(newickParser.parse(line, labelsAmount));
+            NewickParser newickParser = NewickParser(line, labelsAmount);
+            newickTrees.push_back(newickParser.parse());
+            newickTrees.back()->printAdjAndParents();
         }
     }
 

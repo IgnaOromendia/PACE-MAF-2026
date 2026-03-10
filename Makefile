@@ -2,7 +2,7 @@ CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -pedantic -Isrc -Isrc/core -Isrc/model -Isrc/solver
 
 TARGET := pace_maf
-SRC := $(wildcard src/*.cpp src/core/*.cpp src/model/*.cpp)
+SRC := $(wildcard src/*.cpp src/core/*.cpp src/model/*.cpp src/solver/*.cpp)
 BUILD_DIR := build
 OBJ := $(addprefix $(BUILD_DIR)/,$(SRC:.cpp=.o))
 

@@ -25,6 +25,8 @@ private:
 public:
     Instance(std::string fileName);
     ~Instance();
+
+    std::vector<Forest*> trees() const;
 };
 
 #endif

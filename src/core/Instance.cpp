@@ -34,14 +34,17 @@ Instance::Instance(std::string fileName) {
         } else {
             NewickParser newickParser = NewickParser(line, labelsAmount);
             newickTrees.push_back(newickParser.parse());
-            newickTrees.back()->printAdjAndParents();
         }
     }
 
-    std::cout << this->name << std::endl;
+    std::cout << "RUNNING: " << this->name << std::endl;
 }
 
 Instance::~Instance() {}
+
+std::vector<Forest*> Instance::trees() const {
+    return this->newickTrees;
+}
 
 void Instance::unquote(std::string& text) {
     if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {

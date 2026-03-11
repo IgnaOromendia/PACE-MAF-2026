@@ -6,9 +6,9 @@
 #include <utility>
 #include <vector>
 
-struct LabelInfo {
-    LabelInfo() = default;
-    LabelInfo(bool isOriginal, int l, int r): original(isOriginal), left(l), right(r) {}
+struct NodeInfo {
+    NodeInfo() = default;
+    NodeInfo(bool isOriginal, int l, int r): original(isOriginal), left(l), right(r) {}
     bool original = true;
     int left = -1;
     int right = -1;
@@ -17,21 +17,20 @@ struct LabelInfo {
 
 class Forest {
 private:
-    int nodes, labelsAmount, treeCount;
+    int nodeAmount, labelsAmount, treeCount, rootId;
 
     std::vector<std::pair<int, int> > adj;
     std::vector<int> parent, tree, visited;
-    std::vector<LabelInfo> labelInfo;
+    std::vector<NodeInfo> nodesInfo;
 
     void updateComponents(int v);
-    void walkAndPrune(Forest* f, int from, int to) const;
+    Forest* walkAndPrune(Forest* f, int from, int to) const;
+    bool nodeInRange(int a) const;
 
 public:
     Forest(int nodeAmount) : Forest(nodeAmount, nodeAmount) {};
     Forest(int nodeAmount, int labelAmount);
-    Forest(const std::vector<std::pair<int, int>>& adjacency,
-           const std::vector<int>& parents,
-           int labelAmount);
+    Forest(std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int labelAmount);
     Forest(const Forest& other);
     ~Forest();
 
@@ -40,6 +39,7 @@ public:
     bool sameConnectedComponent(int a, int b) const;
     int amountOfTrees() const;
     int LCA(int a, int b) const;
+    int root() const;
     int rootChild() const;
     void printAdjAndParents() const;
 
@@ -51,6 +51,7 @@ public:
     Forest* cut(int node) const;
     Forest* shrink(int a, int b) const;
     Forest* prunePathBetween(int a, int b) const;
+    Forest* expand();
 };
 
 #endif

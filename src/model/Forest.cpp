@@ -1,9 +1,10 @@
 #include "Forest.h"
 
 Forest::Forest(int nodeAmount, int labelAmount) {
-    this->nodes = nodeAmount;
+    this->nodeAmount = nodeAmount;
     this->labelsAmount = labelAmount;
     this->treeCount = nodeAmount;
+    this->rootId = labelAmount;
     
     this->adj.assign(nodeAmount, {-1, -1});
     this->parent.assign(nodeAmount, -1);
@@ -11,65 +12,43 @@ Forest::Forest(int nodeAmount, int labelAmount) {
     this->tree.resize(nodeAmount);
     std::iota(this->tree.begin(), this->tree.end(), 0);
 
-    this->labelInfo.resize(nodeAmount);
+    this->nodesInfo.resize(nodeAmount);
 }
 
-Forest::Forest(const std::vector<std::pair<int, int>>& adjacency,
-               const std::vector<int>& parents,
-               int labelAmount) {
-    nodes = static_cast<int>(adjacency.size());
-    labelsAmount = labelAmount;
+Forest::Forest(std::vector<std::pair<int, int>> adj, std::vector<int> parents, int labelsAmount) {
+    this->nodeAmount = adj.size();
+    this->labelsAmount = labelsAmount;
+    this->rootId = labelsAmount;
 
-    adj = adjacency;
-    parent = parents;
-    labelInfo.resize(nodes);
+    this->adj = adj;
+    this->parent = parents;
+    this->nodesInfo.resize(nodeAmount);
 
-    tree.assign(nodes, -1);
-    visited.assign(nodes, 0);
+    this->tree.assign(nodeAmount, -1);
+    this->visited.assign(nodeAmount, 0);
     treeCount = 0;
 
-    std::vector<int> stack;
-    for (int i = 0; i < nodes; i++) {
-        if (tree[i] != -1) continue;
+    tree[rootId] = treeCount++;
+    updateComponents(rootId);
 
-        tree[i] = treeCount;
-        stack.push_back(i);
-
-        while (not stack.empty()) {
-            int v = stack.back();
-            stack.pop_back();
-
-            auto [left, right] = adj[v];
-            int up = parent[v];
-
-            if (left != -1 and tree[left] == -1) {
-                tree[left] = treeCount;
-                stack.push_back(left);
-            }
-            if (right != -1 and tree[right] == -1) {
-                tree[right] = treeCount;
-                stack.push_back(right);
-            }
-            if (up != -1 and tree[up] == -1) {
-                tree[up] = treeCount;
-                stack.push_back(up);
-            }
+    for(int v = 0; v < nodeAmount; v++) {
+        if (not visited[v]) {
+            tree[v] = treeCount;
+            updateComponents(v);
+            treeCount++;
         }
-
-        treeCount++;
     }
-
-    visited.clear();
 }
 
 Forest::Forest(const Forest& other) {
-    nodes = other.nodes;
+    nodeAmount = other.nodeAmount;
     labelsAmount = other.labelsAmount;
     treeCount = other.treeCount;
     adj = other.adj;
     parent = other.parent;
     tree = other.tree;
-    labelInfo = other.labelInfo;
+    nodesInfo = other.nodesInfo;
+    rootId = other.rootId;
 }
 
 Forest::~Forest() {}
@@ -87,20 +66,20 @@ int Forest::amountOfTrees() const {
 }
 
 int Forest::LCA(int a, int b) const {
-    if (a < 0 or b < 0 or a >= nodes or b >= nodes) return -1;
+    if (a < 0 or b < 0 or a >= nodeAmount or b >= nodeAmount) return -1;
 
-    std::vector<char> isAncestor(nodes, 0);
+    std::vector<char> isAncestor(nodeAmount, 0);
 
     int u = a;
     while (u != -1) {
-        if (u < 0 or u >= nodes) return -1;
+        if (u < 0 or u >= nodeAmount) return -1;
         isAncestor[u] = 1;
         u = parent[u];
     }
 
     int v = b;
     while (v != -1) {
-        if (v < 0 or v >= nodes) return -1;
+        if (v < 0 or v >= nodeAmount) return -1;
         if (isAncestor[v]) return v;
         v = parent[v];
     }
@@ -108,25 +87,29 @@ int Forest::LCA(int a, int b) const {
     return -1;
 }
 
+int Forest::root() const{
+    return this->rootId;
+}
+
 int Forest::rootChild() const {
-    return adj[0].first == -1 ? adj[0].second : adj[1].first;
+    return adj[rootId].first == -1 ? adj[rootId].second : adj[rootId].first;
 }
 
 void Forest::printAdjAndParents() const {
-    std::cout << "node\tadj(left,right)\tparent\n";
-    for (int i = 0; i < nodes; i++) {
-        std::cout << i
-                  << "\t(" << adj[i].first << "," << adj[i].second << ")"
-                  << "\t\t" << parent[i] << "\n";
+    std::cout << "node\t(left,right)\tparent\t\toriginal\tvirtualLabel\n";
+    for (int i = 0; i < nodeAmount; i++) {
+        std::cout << i << "\t(" << adj[i].first << "," << adj[i].second << ")" << "\t\t" << parent[i] << "\t\t";
+        std::cout << nodesInfo[i].original << "\t\t(" << nodesInfo[i].left << "," << nodesInfo[i].right << ")" << "\n";
     }
 }
 
 bool Forest::areSiblings(int a, int b) const {
-    return parent[a] == parent[b];
+    if (not nodeInRange(a) or not nodeInRange(b)) return false;
+    return parent[a] != -1 && parent[a] == parent[b];
 }
 
 std::pair<int, int> Forest::siblings() const {
-    for (int a = 1; a < labelsAmount; a++) 
+    for (int a = 0; a < labelsAmount; a++) 
         for(int b = a + 1; b < labelsAmount; b++) 
             if (areSiblings(a,b))
                 return { a, b };
@@ -139,14 +122,16 @@ Forest* Forest::cut(int node) const {
 
     int p = f->parent[node];
 
-    if (f->adj[p].first == node) f->adj[p] = {-1, f->adj[p].second};
-    if (f->adj[p].second == node) f->adj[p] = {f->adj[p].first, -1};
+    if (p != -1) {
+        if (f->adj[p].first == node) f->adj[p] = {-1, f->adj[p].second};
+        if (f->adj[p].second == node) f->adj[p] = {f->adj[p].first, -1};
+    }
 
     f->parent[node] = -1;
 
     f->tree[node] = f->treeCount++;
 
-    f->visited.assign(nodes, 0);
+    f->visited.assign(nodeAmount, 0);
 
     f->updateComponents(node);
 
@@ -157,9 +142,12 @@ Forest* Forest::shrink(int a, int b) const {
     Forest* f = new Forest(*this);
 
     int p = f->parent[a];
+    if (p == -1) return f;
 
+    f->parent[a] = -1;
+    f->parent[b] = -1;
     f->adj[p] = {-1, -1};
-    f->labelInfo[p] = LabelInfo(false, a, b);
+    f->nodesInfo[p] = NodeInfo(false, a, b);
 
     return f;
 }
@@ -168,9 +156,28 @@ Forest *Forest::prunePathBetween(int a, int b) const {
     Forest* f = new Forest(*this);
     int lca = f->LCA(a,b);
 
-    walkAndPrune(f, a, lca);
+    f = walkAndPrune(f, a, lca);
+    f = walkAndPrune(f, b, lca);
 
-    walkAndPrune(f, b, lca);
+    return f;
+}
+
+Forest *Forest::expand() {
+    Forest* f = new Forest(*this);
+
+    for(int i = 0; i < nodeAmount; i++) {
+        if (f->nodesInfo[i].original) continue;
+        
+        int l = f->nodesInfo[i].left, r = f->nodesInfo[i].right;
+
+        f->adj[i].first = l;
+        f->adj[i].second = r;
+
+        f->parent[l] = i;
+        f->parent[r] = i;
+
+        f->nodesInfo[i] = NodeInfo();
+    }
 
     return f;
 }
@@ -196,7 +203,7 @@ void Forest::updateComponents(int v) {
     }
 }
 
-void Forest::walkAndPrune(Forest* f, int from, int to) const {
+Forest* Forest::walkAndPrune(Forest* f, int from, int to) const {
     int prev = from;
     int cur = f->parent[from];
     while(cur != to) {
@@ -205,4 +212,9 @@ void Forest::walkAndPrune(Forest* f, int from, int to) const {
         prev = cur;
         cur = f->parent[cur];
     }
+    return f;
+}
+
+bool Forest::nodeInRange(int a) const {
+    return 0 <= a and a < nodeAmount;
 }

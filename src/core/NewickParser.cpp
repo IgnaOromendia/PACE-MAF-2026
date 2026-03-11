@@ -5,8 +5,8 @@ NewickParser::NewickParser(std::string stringTree, int labelsAmount) {
     this->stringTree = std::move(stringTree);
     this->stringTreeSize = this->stringTree.size();
     this->labelsAmount = labelsAmount;
-    this->nodeId = labelsAmount + 1;
-    this->maxNodes = 2 * labelsAmount + 1;
+    this->nodeId = labelsAmount;
+    this->maxNodes = 2 * labelsAmount;
 }
 
 NewickParser::~NewickParser(){}
@@ -18,7 +18,7 @@ Forest* NewickParser::parse() {
     parseNodeWithParent(-1);
     skipWhitespace();
 
-    if (index < static_cast<int>(this->stringTree.size()) && this->stringTree[index] == ';') {
+    if (index < stringTreeSize and this->stringTree[index] == ';') {
         index++;
     } else {
         throw std::runtime_error("Invalid Newick: missing ';' terminator");
@@ -63,7 +63,7 @@ int NewickParser::parseNodeWithParent(int parentId) {
         return currentNodeId;
     }
 
-    int label = getCurrentValue();
+    int label = getCurrentValue() - 1;
     parent[label] = parentId;
     return label;
 }

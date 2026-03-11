@@ -1,4 +1,4 @@
-#include "core/Instance.h"
+#include "solver/BTSolver.h"
 
 int main(int argc, char* argv[]) {
 
@@ -10,6 +10,15 @@ int main(int argc, char* argv[]) {
     std::string path = argv[1];
 
     Instance instance(path);
+    BTSolver solver = BTSolver(3);
+
+    Forest* solution = solver.solve(instance);
+    if (solution == nullptr) {
+        std::cerr << "Solver returned no solution\n";
+        return 2;
+    }
+
+    solution->printAdjAndParents();
 
     return 0;
 }

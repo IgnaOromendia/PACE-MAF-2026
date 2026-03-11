@@ -6,14 +6,16 @@
 
 class BTSolver {
 private:
+
+    int k;
     
     std::vector<Forest*> forests;
 
     Forest* solveFor(Forest* F1, Forest* F2);
 
 public:
-    BTSolver();
-    ~BTSolver() {};
+    BTSolver(int k);
+    ~BTSolver();
 
     Forest* minOrder(Forest* A, Forest* B) const;
 

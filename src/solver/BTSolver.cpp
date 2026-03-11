@@ -1,20 +1,22 @@
 #include "BTSolver.h"
 
-BTSolver::BTSolver() {}
+BTSolver::BTSolver(int k): k(k) {}
 
 BTSolver::~BTSolver() {}
 
-Forest* BTSolver::solveFor(Forest *F1, Forest *F2) {
+Forest* BTSolver::solveFor(Forest* F1, Forest* F2) {
+    if (F1->amountOfTrees() > k) return nullptr;
+
     auto[a, b] = F2->siblings();
 
     if (a == -1 and b == -1) {
         int F2RootChild = F2->rootChild();
 
         if (F2RootChild != -1)
-            if (F1->sameConnectedComponent(0, F2RootChild))
-                return new Forest(*F2);
-
-        return new Forest(F2->labelAmount());
+            if (F1->sameConnectedComponent(F2->root(), F2RootChild)) 
+                return new Forest(*(F2->expand()));
+            
+        return new Forest(F2->labelAmount()); // Acá debería expandir los contridos también
     }
 
     if (not F1->sameConnectedComponent(a, b)) {
@@ -39,6 +41,8 @@ Forest* BTSolver::solveFor(Forest *F1, Forest *F2) {
 
         return minOrder(candidate, AFPrunning);
     } 
+
+    return nullptr;
 }
 
 Forest *BTSolver::minOrder(Forest* A, Forest* B) const {
@@ -47,6 +51,8 @@ Forest *BTSolver::minOrder(Forest* A, Forest* B) const {
     return (A->amountOfTrees() <= B->amountOfTrees()) ? A : B;
 }
 
-Forest *BTSolver::solve(Instance instance) {
-    return nullptr;
+Forest* BTSolver::solve(Instance instance) {
+    Forest* F1 = instance.trees()[0];
+    Forest* F2 = instance.trees()[1];
+    return solveFor(F1, F2);
 }

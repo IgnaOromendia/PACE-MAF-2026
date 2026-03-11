@@ -5,8 +5,10 @@ TARGET := pace_maf
 SRC := $(wildcard src/*.cpp src/core/*.cpp src/model/*.cpp src/solver/*.cpp)
 BUILD_DIR := build
 OBJ := $(addprefix $(BUILD_DIR)/,$(SRC:.cpp=.o))
+DIR_TEST ?= input/test
+DIR ?= input/dataset
 
-.PHONY: all run clean
+.PHONY: all run-all clean
 
 all: $(TARGET)
 
@@ -17,8 +19,20 @@ $(BUILD_DIR)/%.o: %.cpp
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-run: $(TARGET)
-	./$(TARGET) input/dataset/tiny01.nw
+run-all: $(TARGET)
+	for file in $(DIR)/*.nw; do \
+		echo "==> $$file"; \
+		./$(TARGET) "$$file" || exit $$?; \
+	done
+
+debug: $(TARGET)
+		./$(TARGET) $(DIR_TEST)/test01.nw
+
+test: $(TARGET)
+	for file in $(DIR_TEST)/*.nw; do \
+		echo "==> $$file"; \
+		./$(TARGET) "$$file" || exit $$?; \
+	done
 
 clean:
 	rm -rf $(BUILD_DIR) $(TARGET)

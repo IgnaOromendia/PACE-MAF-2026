@@ -46,6 +46,15 @@ std::vector<Forest*> Instance::trees() const {
     return this->newickTrees;
 }
 
+std::vector<BTForest*> Instance::btTrees() const {
+    std::vector<BTForest*> result = std::vector<BTForest*>();
+
+    for(Forest* f: newickTrees)
+        result.push_back(new BTForest(*f));
+    
+    return result;
+}
+
 void Instance::unquote(std::string& text) {
     if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {
         text.pop_back();

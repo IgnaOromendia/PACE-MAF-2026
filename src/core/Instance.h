@@ -7,7 +7,7 @@
 #include <sstream>
 #include <vector>
 
-#include "../model/Forest.h"
+#include "../model/BTForest.h"
 
 class Instance {
 private:
@@ -27,6 +27,7 @@ public:
     ~Instance();
 
     std::vector<Forest*> trees() const;
+    std::vector<BTForest*> btTrees() const;
 };
 
 #endif

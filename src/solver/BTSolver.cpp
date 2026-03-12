@@ -4,7 +4,7 @@ BTSolver::BTSolver(int k): k(k) {}
 
 BTSolver::~BTSolver() {}
 
-Forest* BTSolver::solveFor(Forest* F1, Forest* F2) {
+BTForest* BTSolver::solveFor(BTForest* F1, BTForest* F2) {
     if (F1->amountOfTrees() > k) return nullptr;
 
     auto[a, b] = F2->siblings();
@@ -14,15 +14,15 @@ Forest* BTSolver::solveFor(Forest* F1, Forest* F2) {
 
         if (F2RootChild != -1)
             if (F1->sameConnectedComponent(F2->root(), F2RootChild)) 
-                return new Forest(*(F2->expand()));
+                return new BTForest(*F2);
             
-        return new Forest(F2->labelAmount()); // Acá debería expandir los contridos también
+        return F2->singletons();
     }
 
     if (not F1->sameConnectedComponent(a, b)) {
 
-        Forest* AFcutting_a = solveFor(F1->cut(a), F2->cut(a));
-        Forest* AFcutting_b = solveFor(F1->cut(b), F2->cut(b));
+        BTForest* AFcutting_a = solveFor(F1->cut(a), F2->cut(a));
+        BTForest* AFcutting_b = solveFor(F1->cut(b), F2->cut(b));
 
         return minOrder(AFcutting_a, AFcutting_b);
     } 
@@ -33,11 +33,11 @@ Forest* BTSolver::solveFor(Forest* F1, Forest* F2) {
 
     if (F1->sameConnectedComponent(a,b) and not F1->areSiblings(a,b)) {
 
-        Forest* AFcutting_a = solveFor(F1->cut(a), F2->cut(a));
-        Forest* AFcutting_b = solveFor(F1->cut(b), F2->cut(b));
-        Forest* candidate = minOrder(AFcutting_a, AFcutting_b);
+        BTForest* AFcutting_a = solveFor(F1->cut(a), F2->cut(a));
+        BTForest* AFcutting_b = solveFor(F1->cut(b), F2->cut(b));
+        BTForest* candidate = minOrder(AFcutting_a, AFcutting_b);
 
-        Forest* AFPrunning = solveFor(F1->prunePathBetween(a, b), F2);
+        BTForest* AFPrunning = solveFor(F1->prunePathBetween(a, b), F2);
 
         return minOrder(candidate, AFPrunning);
     } 
@@ -45,14 +45,22 @@ Forest* BTSolver::solveFor(Forest* F1, Forest* F2) {
     return nullptr;
 }
 
-Forest *BTSolver::minOrder(Forest* A, Forest* B) const {
+BTForest *BTSolver::minOrder(BTForest* A, BTForest* B) const {
     if (A == nullptr) return B;
     if (B == nullptr) return A;
-    return (A->amountOfTrees() <= B->amountOfTrees()) ? A : B;
+
+    if (A->amountOfTrees() <= B->amountOfTrees()) {
+        delete B;
+        return A;
+    }
+
+    delete A;
+    return B;
 }
 
-Forest* BTSolver::solve(Instance instance) {
-    Forest* F1 = instance.trees()[0];
-    Forest* F2 = instance.trees()[1];
-    return solveFor(F1, F2);
+BTForest* BTSolver::solve(Instance instance) {
+    std::vector<BTForest*> forest = instance.btTrees();
+    BTForest* solution = solveFor(forest[0], forest[1]);
+    if (solution == nullptr) return nullptr;
+    return solution->expand();
 }

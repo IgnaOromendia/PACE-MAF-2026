@@ -1,25 +1,29 @@
-#include "ForestBT.h"
+#include "BTForest.h"
 
-ForestBT::ForestBT(int nodeAmount, int labelAmount): Forest(nodeAmount, labelAmount) {
-    this->nodesInfo.resize(nodeAmount);
+BTForest::BTForest(int nodeAmount, int labelAmount): Forest(nodeAmount, labelAmount) {
+    initializeNodeInfo(nodeAmount);
 }
 
-ForestBT::ForestBT(std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int labelAmount): Forest(adjacency, parents, labelAmount) {
-    this->nodesInfo.resize(nodeAmount);
+BTForest::BTForest(std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int labelAmount): Forest(adjacency, parents, labelAmount) {
+    initializeNodeInfo(nodeAmount);
 }
 
-ForestBT::ForestBT(const ForestBT &other): Forest(other) {
+BTForest::BTForest(const Forest &other): Forest(other) {
+    initializeNodeInfo(other.amountOfNodes());
+}
+
+BTForest::BTForest(const BTForest &other): Forest(other) {
     nodesInfo = other.nodesInfo;
 }
 
-ForestBT::~ForestBT() {}
+BTForest::~BTForest() {}
 
-bool ForestBT::areSiblings(int a, int b) const {
+bool BTForest::areSiblings(int a, int b) const {
     if (not nodeInRange(a) or not nodeInRange(b)) return false;
     return parent[a] != -1 && parent[a] == parent[b];
 }
 
-std::pair<int, int> ForestBT::siblings() const {
+std::pair<int, int> BTForest::siblings() const {
     for (int a = 0; a < labelsAmount; a++) 
         for(int b = a + 1; b < labelsAmount; b++) 
             if (areSiblings(a,b))
@@ -28,8 +32,8 @@ std::pair<int, int> ForestBT::siblings() const {
     return {-1, -1};
 }
 
-ForestBT *ForestBT::cut(int node) const {
-    ForestBT* f = new ForestBT(*this);
+BTForest* BTForest::cut(int node) const {
+    BTForest* f = new BTForest(*this);
 
     int p = f->parent[node];
 
@@ -49,9 +53,8 @@ ForestBT *ForestBT::cut(int node) const {
     return f;
 }
 
-ForestBT *ForestBT::shrink(int a, int b) const
-{
-    ForestBT* f = new ForestBT(*this);
+BTForest* BTForest::shrink(int a, int b) const {
+    BTForest* f = new BTForest(*this);
 
     int p = f->parent[a];
     if (p == -1) return f;
@@ -59,13 +62,13 @@ ForestBT *ForestBT::shrink(int a, int b) const
     f->parent[a] = -1;
     f->parent[b] = -1;
     f->adj[p] = {-1, -1};
-    f->nodesInfo[p] = NodeInfo(false, a, b);
+    f->nodesInfo[p] = NodeInfo(p, a, b);
 
     return f;
 }
 
-ForestBT *ForestBT::expand() {
-    ForestBT* f = new ForestBT(*this);
+BTForest* BTForest::expand() const {
+    BTForest* f = new BTForest(*this);
 
     for(int i = 0; i < nodeAmount; i++) {
         if (f->nodesInfo[i].original) continue;
@@ -84,8 +87,8 @@ ForestBT *ForestBT::expand() {
     return f;
 }
 
-ForestBT *ForestBT::prunePathBetween(int a, int b) const {
-    ForestBT* f = new ForestBT(*this);
+BTForest* BTForest::prunePathBetween(int a, int b) const {
+    BTForest* f = new BTForest(*this);
     int lca = f->LCA(a,b);
 
     f = walkAndPrune(f, a, lca);
@@ -94,7 +97,18 @@ ForestBT *ForestBT::prunePathBetween(int a, int b) const {
     return f;
 }
 
-ForestBT* ForestBT::walkAndPrune(ForestBT* f, int from, int to) const {
+BTForest* BTForest::singletons() const {
+    BTForest* f = new BTForest(*this);
+
+    for(int v = labelsAmount; v < nodeAmount; v++) {
+        f->parent[v] = -1;
+        f->adj[v] = {-1,-1};
+    }
+
+    return f;
+}
+
+BTForest* BTForest::walkAndPrune(BTForest* f, int from, int to) const {
     int prev = from;
     int cur = f->parent[from];
     while(cur != to) {
@@ -104,4 +118,10 @@ ForestBT* ForestBT::walkAndPrune(ForestBT* f, int from, int to) const {
         cur = f->parent[cur];
     }
     return f;
+}
+
+void BTForest::initializeNodeInfo(int amount) {
+    this->nodesInfo.reserve(amount);
+    for(int v = 0; v < amount; v++)
+        this->nodesInfo.emplace_back(v);
 }

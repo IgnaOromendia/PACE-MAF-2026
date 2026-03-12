@@ -8,7 +8,7 @@ OBJ := $(addprefix $(BUILD_DIR)/,$(SRC:.cpp=.o))
 DIR_TEST ?= input/test
 DIR ?= input/dataset
 
-.PHONY: all run-all clean
+.PHONY: all debug run-all clean
 
 all: $(TARGET)
 
@@ -21,7 +21,6 @@ $(BUILD_DIR)/%.o: %.cpp
 
 run-all: $(TARGET)
 	for file in $(DIR)/*.nw; do \
-		echo "==> $$file"; \
 		./$(TARGET) "$$file" || exit $$?; \
 	done
 
@@ -30,7 +29,6 @@ debug: $(TARGET)
 
 test: $(TARGET)
 	for file in $(DIR_TEST)/*.nw; do \
-		echo "==> $$file"; \
 		./$(TARGET) "$$file" || exit $$?; \
 	done
 

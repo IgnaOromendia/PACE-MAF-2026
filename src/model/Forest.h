@@ -23,13 +23,20 @@ public:
     Forest(const Forest& other);
     ~Forest();
 
-    // Forest info
+    // Amountos
     int labelAmount() const;
-    bool sameConnectedComponent(int a, int b) const;
     int amountOfTrees() const;
+    int amountOfNodes() const;
+
+    // Nodes
+    bool sameConnectedComponent(int a, int b) const;
     int LCA(int a, int b) const;
+
+    // Root
     int root() const;
     int rootChild() const;
+
+    // Debug
     void printAdjAndParents() const;
         
 };

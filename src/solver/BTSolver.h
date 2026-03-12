@@ -1,7 +1,7 @@
 #ifndef BTSOLVER_H
 #define BTSOLVER_H
 
-#include "Forest.h"
+#include "../model/BTForest.h"
 #include "../core/Instance.h"
 
 class BTSolver {
@@ -9,17 +9,17 @@ private:
 
     int k;
     
-    std::vector<Forest*> forests;
+    std::vector<BTForest*> forests;
 
-    Forest* solveFor(Forest* F1, Forest* F2);
+    BTForest* solveFor(BTForest* F1, BTForest* F2);
 
 public:
     BTSolver(int k);
     ~BTSolver();
 
-    Forest* minOrder(Forest* A, Forest* B) const;
+    BTForest* minOrder(BTForest* A, BTForest* B) const;
 
-    Forest* solve(Instance instance);
+    BTForest* solve(Instance instance);
 
 };
 

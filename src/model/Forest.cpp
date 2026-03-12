@@ -44,12 +44,16 @@ int Forest::labelAmount() const {
     return labelsAmount;
 }
 
-bool Forest::sameConnectedComponent(int a, int b) const {
-    return tree[a] == tree[b];
-}
-
 int Forest::amountOfTrees() const {
     return treeCount;
+}
+
+int Forest::amountOfNodes() const {
+    return nodeAmount;
+}
+
+bool Forest::sameConnectedComponent(int a, int b) const {
+    return tree[a] == tree[b];
 }
 
 int Forest::LCA(int a, int b) const {
@@ -84,9 +88,8 @@ int Forest::rootChild() const {
 
 void Forest::printAdjAndParents() const {
     std::cout << "node\t(left,right)\tparent\n";
-    for (int i = 0; i < nodeAmount; i++) {
-        std::cout << i << "\t(" << adj[i].first << "," << adj[i].second << ")" << "\t\t" << parent[i] << "\t\t";
-    }
+    for (int i = 0; i < nodeAmount; i++) 
+        std::cout << i << "\t(" << adj[i].first << "," << adj[i].second << ")" << "\t\t" << parent[i] << "\n";
 }
 
 void Forest::updateComponents(int v) {

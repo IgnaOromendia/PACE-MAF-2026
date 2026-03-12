@@ -1,5 +1,4 @@
 #include "NewickParser.h"
-#include <stdexcept>
 
 NewickParser::NewickParser(std::string stringTree, int labelsAmount) {
     this->stringTree = std::move(stringTree);

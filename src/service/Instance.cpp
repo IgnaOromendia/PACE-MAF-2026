@@ -55,6 +55,15 @@ std::vector<BTForest*> Instance::btTrees() const {
     return result;
 }
 
+std::vector<MIPForest*> Instance::mipTrees() const{
+    std::vector<MIPForest*> result = std::vector<MIPForest*>();
+
+    for(Forest* f: newickTrees)
+        result.push_back(new MIPForest(*f));
+    
+    return result;
+}
+
 void Instance::unquote(std::string& text) {
     if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {
         text.pop_back();

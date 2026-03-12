@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "../model/BTForest.h"
+#include "../model/MIPForest.h"
 
 class Instance {
 private:
@@ -28,6 +29,7 @@ public:
 
     std::vector<Forest*> trees() const;
     std::vector<BTForest*> btTrees() const;
+    std::vector<MIPForest*> mipTrees() const;
 };
 
 #endif

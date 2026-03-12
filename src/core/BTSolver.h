@@ -2,7 +2,7 @@
 #define BTSOLVER_H
 
 #include "../model/BTForest.h"
-#include "../core/Instance.h"
+#include "../service/Instance.h"
 
 class BTSolver {
 private:

@@ -5,3 +5,6 @@ pace_maf
 output/
 *.lp
 paceSolver
+stride-downloads/
+stride-logs/
+input/lists/

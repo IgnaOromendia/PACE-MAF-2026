@@ -2,55 +2,23 @@
 
 Solution for the PACE 2026 Challenge.
 
-## Requirements
 
-To build the project you need `g++` with C++17 support, `make`, and IBM CPLEX / Concert installed locally.
-
-## Build
+## Makefile
 
 ```sh
 make
-```
-
-This generates `./pace_maf`.
-
-To clean the project:
-
-```sh
 make clean
-```
-
-## Run The Solver
-
-Run all dataset instances:
-
-```sh
 make run-all
-```
-
-Run the debug target:
-
-```sh
 make debug
-```
-
-Run the test instances:
-
-```sh
 make test
+./paceSolver input/dataset/tiny01.nw
 ```
-
-Run one instance manually:
-
-```sh
-./pace_maf input/dataset/tiny01.nw
-```
-
-Solutions are written to:
-
-```sh
-output/out_<instance-name>.nw
-```
+1. Compile generating `paceSolver`
+2. Removes Build
+3. Executes all files in input/dataset
+4. Executes only one file of input/dataset
+5. Executes all files in input/test
+6. Manual execution
 
 ## Run The Checker
 
@@ -59,11 +27,6 @@ Check all instances in an input folder:
 ```sh
 ./checker.sh dataset
 ./checker.sh test
-```
-
-Check one instance manually:
-
-```sh
 ./checker input/dataset/tiny01.nw output/out_tiny01.nw
 ```
 
@@ -74,3 +37,9 @@ make
 make run-all
 ./checker.sh dataset
 ```
+## Stride
+
+#### Steps:
+1. Download list_name.lst from [link](https://pace2026.imada.sdu.dk)
+2. Put the file in `input/dataset/lists`
+3. Run strideRunner.sh list_name

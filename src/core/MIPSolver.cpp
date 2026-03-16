@@ -11,7 +11,7 @@ MIPSolver::~MIPSolver() {
 MIPForest* MIPSolver::solve(Instance instance) {
     forests = instance.mipTrees();
 
-    int index = 1;
+    size_t index = 1;
 
     MIPForest* F = forests.front();
     

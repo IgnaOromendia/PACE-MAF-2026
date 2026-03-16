@@ -14,7 +14,7 @@
 class Instance {
 private:
     std::string name, idigest, description;
-    std::string outputPath = "src/output/";
+    std::string outputPath = "./output/";
 
     int treesAmount, labelsAmount;
     

@@ -2,7 +2,6 @@
 #define NEWICKPARSER_H
 
 #include <cctype>
-#include <fstream>
 #include <string>
 #include "../model/Forest.h"
 
@@ -26,7 +25,7 @@ public:
     ~NewickParser();
 
     Forest* newickToForest(int id, std::string stringTree, int labelAmount);
-    void forestToNewick(Forest* forest, std::string filePath);
+    void forestToNewick(Forest* forest);
 };
 
 #endif

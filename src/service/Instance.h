@@ -14,7 +14,6 @@
 class Instance {
 private:
     std::string name, idigest, description;
-    std::string outputPath = "./output/";
 
     int treesAmount, labelsAmount;
     
@@ -25,7 +24,7 @@ private:
     void trim(std::string& text);
 
 public:
-    Instance(std::string fileName);
+    Instance();
     ~Instance();
 
     std::vector<Forest*> trees() const;

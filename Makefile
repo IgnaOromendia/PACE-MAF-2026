@@ -33,15 +33,15 @@ $(BUILD_DIR)/%.o: %.cpp
 
 run-all: $(TARGET)
 	@for file in $(DIR)/*.nw; do \
-		./$(TARGET) "$$file" || exit $$?; \
+		./$(TARGET) < "$$file" || exit $$?; \
 	done
 
 debug: $(TARGET)
-	@./$(TARGET) $(DIR_TEST)/test03.nw
+	@./$(TARGET) < $(DIR_TEST)/test03.nw
 
 test: $(TARGET)
 	@for file in $(DIR_TEST)/*.nw; do \
-		./$(TARGET) "$$file" || exit $$?; \
+		./$(TARGET) < "$$file" || exit $$?; \
 	done
 
 clean:

@@ -32,25 +32,20 @@ Forest* NewickParser::newickToForest(int id, std::string stringTree, int labelAm
     return new Forest(id, this->adj, this->parent, labelsAmount);
 }
 
-void NewickParser::forestToNewick(Forest* forest, std::string filePath) {
+void NewickParser::forestToNewick(Forest* forest) {
     this->forest = forest;
 
     if (forest == nullptr) {
         throw std::runtime_error("Cannot serialize a null forest");
     }
 
-    std::ofstream output(filePath);
-    if (!output.is_open()) {
-        throw std::runtime_error("Unable to open output file: " + filePath);
-    }
-
     for (int v = 0; v < forest->amountOfNodes(); v++) {
         if (forest->parentOf(v) != -1) continue;
 
         std::string serialized = serializeNode(v);
-        if (!serialized.empty()) {
-            output << serialized << ";\n";
-        }
+        if (!serialized.empty()) 
+            std::cout << serialized << ";\n";
+        
     }
 }
 

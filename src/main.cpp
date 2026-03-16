@@ -1,16 +1,9 @@
 #include "core/BTSolver.h"
 #include "core/MIPSolver.h"
 
-int main(int argc, char* argv[]) {
+int main() {
 
-    if (argc < 2) {
-        std::cerr << "Input file missing\n";
-        return 1;
-    }
-
-    std::string path = argv[1];
-
-    Instance instance(path);
+    Instance instance = Instance();
     // BTSolver solver = BTSolver(100000);
 
     // Forest* solution = solver.solve(instance);

@@ -129,8 +129,6 @@ void MIPSolver::solve() {
     solver.solve();
 
     double objValue = solver.getBestObjValue();
-
-    std::cout << "MAF Trees: " << objValue + 1 << std::endl;
 }
 
 void MIPSolver::exportSolution() const {

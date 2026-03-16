@@ -1,14 +1,11 @@
 #include "Instance.h"
 
-Instance::Instance(std::string fileName) {
-    std::ifstream inputFile(fileName);
-
-    if (!inputFile) std::cerr << "Input file error\n";
+Instance::Instance() {
 
     std::string line, tag, key, value;
     newickParser = NewickParser();
 
-    while (std::getline(inputFile, line)) {
+    while (std::getline(std::cin, line)) {
         trim(line);
         if (line.empty()) continue;
 
@@ -35,8 +32,6 @@ Instance::Instance(std::string fileName) {
             newickTrees.push_back(newickParser.newickToForest(newickTrees.size(), line, labelsAmount));
         }
     }
-
-    std::cout << "RUNNING: " << this->name << std::endl;
 }
 
 Instance::~Instance() {}
@@ -64,7 +59,7 @@ std::vector<MIPForest*> Instance::mipTrees() const{
 }
 
 void Instance::exportOutput(Forest* forest) {
-    newickParser.forestToNewick(forest, outputPath + "out_" + name + ".nw");
+    newickParser.forestToNewick(forest);
 }
 
 void Instance::unquote(std::string& text) {

@@ -88,11 +88,6 @@ void MIPForest::precomputPaths() {
             for(int i = halfPath.size() - 1; i >= 0; i--)
                 path.push_back(halfPath[i]);
 
-            // std::cout << "Path " << v << " -> " << w << ": ";
-            // for (int edge : path)
-            //     std::cout << edge << " ";
-            // std::cout << std::endl;
-
             paths.insert({{v,w}, path});
             paths.insert({{w,v}, path});
         }

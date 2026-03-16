@@ -27,5 +27,7 @@ int main(int argc, char* argv[]) {
 
     MAF->printAdjAndParents();
 
+    instance.exportOutput(MAF);
+
     return 0;
 }

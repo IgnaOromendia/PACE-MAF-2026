@@ -89,6 +89,14 @@ bool Forest::isLeaf(int a) const {
     return adj[a].first == -1 and adj[a].second == -1;
 }
 
+std::pair<int, int> Forest::childrenOf(int node) const {
+    return adj[node];
+}
+
+int Forest::parentOf(int node) const {
+    return parent[node];
+}
+
 void Forest::cut(int node) {
     int p = parent[node];
 

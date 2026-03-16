@@ -1,16 +1,19 @@
 #include "NewickParser.h"
+#include <stdexcept>
+#include <utility>
 
-NewickParser::NewickParser(std::string stringTree, int labelsAmount) {
-    this->stringTree = std::move(stringTree);
-    this->stringTreeSize = this->stringTree.size();
-    this->labelsAmount = labelsAmount;
-    this->nodeId = labelsAmount;
-    this->maxNodes = 2 * labelsAmount;
-}
+NewickParser::NewickParser() {}
 
 NewickParser::~NewickParser(){}
 
-Forest* NewickParser::parse(int id) {
+Forest* NewickParser::newickToForest(int id, std::string stringTree, int labelAmount) {
+    this->stringTree        = std::move(stringTree);
+    this->stringTreeSize    = this->stringTree.size();
+    this->labelsAmount      = labelAmount;
+    this->nodeId            = labelsAmount;
+    this->maxNodes          = 2 * labelsAmount;
+    this->index             = 0;
+
     this->adj.assign(maxNodes, {-1, -1});
     this->parent.assign(maxNodes, -1);
 
@@ -27,6 +30,28 @@ Forest* NewickParser::parse(int id) {
     this->parent.resize(nodeId);
 
     return new Forest(id, this->adj, this->parent, labelsAmount);
+}
+
+void NewickParser::forestToNewick(Forest* forest, std::string filePath) {
+    this->forest = forest;
+
+    if (forest == nullptr) {
+        throw std::runtime_error("Cannot serialize a null forest");
+    }
+
+    std::ofstream output(filePath);
+    if (!output.is_open()) {
+        throw std::runtime_error("Unable to open output file: " + filePath);
+    }
+
+    for (int v = 0; v < forest->amountOfNodes(); v++) {
+        if (forest->parentOf(v) != -1) continue;
+
+        std::string serialized = serializeNode(v);
+        if (!serialized.empty()) {
+            output << serialized << ";\n";
+        }
+    }
 }
 
 int NewickParser::parseNodeWithParent(int parentId) {
@@ -85,4 +110,17 @@ void NewickParser::skipWhitespace() {
     while (index < stringTreeSize && std::isspace(static_cast<unsigned char>(stringTree[index]))) {
         ++index;
     }
+}
+
+std::string NewickParser::serializeNode(int node) const {
+    if (forest->isLeaf(node)) {
+        return node < labelsAmount ? std::to_string(node + 1) : "";
+    } 
+
+    auto [leftChild, rightChild] = forest->childrenOf(node);
+    if (leftChild == -1 || rightChild == -1) {
+        throw std::runtime_error("Invalid binary tree: internal node missing child");
+    }
+
+    return "(" + serializeNode(leftChild) + "," + serializeNode(rightChild) + ")";
 }

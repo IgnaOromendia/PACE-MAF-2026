@@ -34,6 +34,8 @@ public:
     bool sameConnectedComponent(int a, int b) const;
     int LCA(int a, int b) const;
     bool isLeaf(int a) const;
+    std::pair<int, int> childrenOf(int node) const;
+    int parentOf(int node) const;
     
     // Forest Operations
     void cut(int node);

@@ -33,7 +33,7 @@ Instance::Instance(std::string fileName) {
             continue;
         } else {
             NewickParser newickParser = NewickParser(line, labelsAmount);
-            newickTrees.push_back(newickParser.parse());
+            newickTrees.push_back(newickParser.parse(newickTrees.size()));
         }
     }
 

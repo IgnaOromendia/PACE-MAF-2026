@@ -10,7 +10,7 @@ NewickParser::NewickParser(std::string stringTree, int labelsAmount) {
 
 NewickParser::~NewickParser(){}
 
-Forest* NewickParser::parse() {
+Forest* NewickParser::parse(int id) {
     this->adj.assign(maxNodes, {-1, -1});
     this->parent.assign(maxNodes, -1);
 
@@ -26,7 +26,7 @@ Forest* NewickParser::parse() {
     this->adj.resize(nodeId);
     this->parent.resize(nodeId);
 
-    return new Forest(this->adj, this->parent, labelsAmount);
+    return new Forest(id, this->adj, this->parent, labelsAmount);
 }
 
 int NewickParser::parseNodeWithParent(int parentId) {

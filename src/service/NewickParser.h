@@ -22,7 +22,7 @@ public:
     NewickParser(std::string stringTree, int labels);
     ~NewickParser();
 
-    Forest* parse();
+    Forest* parse(int id);
 };
 
 #endif

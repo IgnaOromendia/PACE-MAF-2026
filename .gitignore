@@ -2,5 +2,5 @@ build/
 .DS_Store
 pace_maf
 .vscode/
-
+output/
 *.lp

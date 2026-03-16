@@ -25,8 +25,6 @@ int main(int argc, char* argv[]) {
 
     MIPForest* MAF = mipSolver.solve(instance);
 
-    MAF->printAdjAndParents();
-
     instance.exportOutput(MAF);
 
     return 0;

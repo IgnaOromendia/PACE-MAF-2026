@@ -1,4 +1,5 @@
-#include "solver/BTSolver.h"
+#include "core/BTSolver.h"
+#include "core/MIPSolver.h"
 
 int main(int argc, char* argv[]) {
 
@@ -10,15 +11,21 @@ int main(int argc, char* argv[]) {
     std::string path = argv[1];
 
     Instance instance(path);
-    BTSolver solver = BTSolver(3);
+    // BTSolver solver = BTSolver(100000);
 
-    Forest* solution = solver.solve(instance);
-    if (solution == nullptr) {
-        std::cerr << "Solver returned no solution\n";
-        return 2;
-    }
+    // Forest* solution = solver.solve(instance);
+    // if (solution == nullptr) {
+    //     std::cerr << "Solver returned no solution\n";
+    //     return 2;
+    // }
 
-    solution->printAdjAndParents();
+    // solution->printAdjAndParents();
+
+    MIPSolver mipSolver = MIPSolver();
+
+    MIPForest* MAF = mipSolver.solve(instance);
+
+    MAF->printAdjAndParents();
 
     return 0;
 }

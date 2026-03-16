@@ -1,6 +1,7 @@
 #include "Forest.h"
 
-Forest::Forest(int nodeAmount, int labelAmount) {
+Forest::Forest(int forestId, int nodeAmount, int labelAmount) {
+    this->forestId      = forestId;
     this->nodeAmount    = nodeAmount;
     this->labelsAmount  = labelAmount;
     this->treeCount     = nodeAmount;
@@ -15,7 +16,8 @@ Forest::Forest(int nodeAmount, int labelAmount) {
     
 }
 
-Forest::Forest(std::vector<std::pair<int, int>> adj, std::vector<int> parents, int labelsAmount) {
+Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<int> parents, int labelsAmount) {
+    this->forestId      = forestId;
     this->nodeAmount    = adj.size();
     this->labelsAmount  = labelsAmount;
     this->rootId        = labelsAmount;
@@ -29,6 +31,7 @@ Forest::Forest(std::vector<std::pair<int, int>> adj, std::vector<int> parents, i
 }
 
 Forest::Forest(const Forest& other) {
+    forestId         = other.forestId;
     nodeAmount      = other.nodeAmount;
     labelsAmount    = other.labelsAmount;
     treeCount       = other.treeCount;
@@ -39,6 +42,10 @@ Forest::Forest(const Forest& other) {
 }
 
 Forest::~Forest() {}
+
+int Forest::id() const {
+    return forestId;
+}
 
 int Forest::labelAmount() const {
     return labelsAmount;
@@ -76,6 +83,58 @@ int Forest::LCA(int a, int b) const {
     }
 
     return -1;
+}
+
+bool Forest::isLeaf(int a) const {
+    return adj[a].first == -1 and adj[a].second == -1;
+}
+
+void Forest::cut(int node) {
+    int p = parent[node];
+
+    if (p != -1) {
+        if (adj[p].first == node) adj[p] = {-1, adj[p].second};
+        if (adj[p].second == node) adj[p] = {adj[p].first, -1};
+    }
+
+    parent[node] = -1;
+
+    tree[node] = treeCount++;
+
+    visited.assign(nodeAmount, 0);
+
+    updateComponents(node);
+
+}
+
+void Forest::regraft() {
+    bool modified = true;
+    
+    while(modified) {
+        modified = false;
+        for(int node = labelsAmount; node < nodeAmount; node++) {
+            if (adj[node].first != -1 and adj[node].second != -1) continue;
+            if (adj[node].first == -1 and adj[node].second == -1 and parent[node] == -1) continue;
+
+            modified = true;
+
+            int descendant  = adj[node].first == -1 ? adj[node].second : adj[node].first;
+            int ancestor    = parent[node];
+
+            if (descendant != -1) parent[descendant] = ancestor;
+
+            adj[node] = {-1,-1};
+            parent[node] = -1;
+
+            if (ancestor == -1) continue;
+
+            if (adj[ancestor].first == node) 
+                adj[ancestor].first = descendant;
+            else 
+                adj[ancestor].second = descendant;
+        }   
+    }
+     
 }
 
 int Forest::root() const{

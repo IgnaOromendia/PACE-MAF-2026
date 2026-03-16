@@ -3,3 +3,4 @@ build/
 pace_maf
 .vscode/
 
+*.lp

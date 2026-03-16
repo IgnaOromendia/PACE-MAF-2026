@@ -1,5 +1,5 @@
 CXX := g++
-TARGET := pace_maf
+TARGET := paceSolver
 BUILD_DIR := build
 DIR_TEST ?= input/test
 DIR ?= input/dataset

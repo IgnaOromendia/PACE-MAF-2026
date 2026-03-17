@@ -34,7 +34,10 @@ Instance::Instance() {
     }
 }
 
-Instance::~Instance() {}
+Instance::~Instance() {
+    for (Forest* f: newickTrees)
+        delete f;
+}
 
 std::vector<Forest*> Instance::trees() const {
     return this->newickTrees;

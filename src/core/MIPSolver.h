@@ -38,7 +38,7 @@ public:
     MIPSolver();
     ~MIPSolver();
 
-    MIPForest* solve(Instance instance);
+    MIPForest* solve(Instance& instance);
 };
 
 

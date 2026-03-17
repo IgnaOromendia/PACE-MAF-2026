@@ -2,7 +2,6 @@
 
 Solution for the PACE 2026 Challenge.
 
-
 ## Makefile
 
 ```sh
@@ -43,3 +42,10 @@ make run-all
 1. Download list_name.lst from [link](https://pace2026.imada.sdu.dk)
 2. Put the file in `input/dataset/lists`
 3. Run strideRunner.sh list_name
+
+## Memory Leaks
+
+Check leaks with
+```sh
+leaks --atExit -- ./paceSolver < input/test/test03.nw > outLeak.txt
+```

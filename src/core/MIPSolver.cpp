@@ -1,14 +1,13 @@
 #include "MIPSolver.h"
 
-MIPSolver::MIPSolver() {
-    env = IloEnv();
-}
+MIPSolver::MIPSolver() {}
 
 MIPSolver::~MIPSolver() {
     env.end();
+    for(MIPForest* F: forests) delete F;
 }
 
-MIPForest* MIPSolver::solve(Instance instance) {
+MIPForest* MIPSolver::solve(Instance& instance) {
     forests = instance.mipTrees();
 
     size_t index = 1;

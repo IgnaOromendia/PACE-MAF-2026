@@ -106,7 +106,7 @@ void MIPForest::tagEdges() {
     this->edgesAmount = edgeCount;
 }
 
-std::pair<int,int> MIPForest::low(Triple t) const {
+std::pair<int,int> MIPForest::low(const Triple& t) const {
     int l_ij = LCA(t.i, t.j);
     int l_ik = LCA(t.i, t.k);
     int l_jk = LCA(t.j, t.k);
@@ -115,4 +115,20 @@ std::pair<int,int> MIPForest::low(Triple t) const {
     if (l_ij == l_jk) return {t.i, t.k};
 
     return {t.i, t.j};
+}
+
+void MIPForest::conflictiveTriples(const MIPForest* F, std::vector<Triple>& conflictive) const {
+    for(int v = 0; v < labelAmount(); v++) {
+        for(int w = v + 1; w < labelAmount(); w++) {
+            for(int z = w + 1; z < labelAmount(); z++) {
+                Triple t = Triple(v,w,z);
+                if (low(t) != F->low(t))
+                    conflictive.push_back(t);
+            }
+        }
+    }       
+}
+
+bool MIPForest::isConflictive(const Triple &t, const MIPForest *F) const {
+    return low(t) != F->low(t);
 }

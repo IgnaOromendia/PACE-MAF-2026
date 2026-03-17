@@ -25,22 +25,11 @@ struct Triple {
     } 
 };
 
-struct TripleHash {
-    std::size_t operator()(const Triple& t) const {
-        std::size_t h1 = std::hash<int>{}(t.i);
-        std::size_t h2 = std::hash<int>{}(t.j);
-        std::size_t h3 = std::hash<int>{}(t.k);
-
-        return h1 ^ (h2 << 1) ^ (h3 << 2);
-    }
-};
-
 class MIPForest: public Forest {
 private:
 
     int edgesAmount;
     
-    std::unordered_set<Triple, TripleHash> conflictedLeafs;
     std::vector<std::pair<int, int>> edgeToNode;
     std::unordered_map<std::pair<int,int>, int, EdgeHash> nodeToEdge;
     std::unordered_map<std::pair<int,int>, std::vector<int> , EdgeHash> paths;
@@ -69,8 +58,9 @@ public:
     std::pair<int, int> nodesOf(int edgeId) const;
 
     // Triples
-    std::pair<int,int> low(Triple t) const;
-    
+    std::pair<int,int> low(const Triple& t) const;
+    void conflictiveTriples(const MIPForest* F, std::vector<Triple>& conflictive) const;
+    bool isConflictive(const Triple& t, const MIPForest* F) const;
     
 };
 

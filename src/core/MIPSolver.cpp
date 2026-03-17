@@ -127,8 +127,6 @@ void MIPSolver::solve() {
     solver.extract(model);
     solver.exportModel(equationsFile.c_str());
     solver.solve();
-
-    double objValue = solver.getBestObjValue();
 }
 
 void MIPSolver::exportSolution() const {

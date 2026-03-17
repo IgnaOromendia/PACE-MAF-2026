@@ -17,4 +17,4 @@ fi
 
 ./stride download -i "$list_path"
 ./stride run -s ./paceSolver -i "$list_path"
-pyton3 process_latest_summary
+python3 process_latest_summary.py

@@ -6,14 +6,16 @@ Forest::Forest(int forestId, int nodeAmount, int labelAmount) {
     this->labelsAmount  = labelAmount;
     this->treeCount     = nodeAmount;
     this->rootId        = labelAmount;
+    this->edgesAmount   = nodeAmount - 1;
     
     this->adj.assign(nodeAmount, {-1, -1});
     this->parent.assign(nodeAmount, -1);
+    this->edgeAvailable.assign(edgesAmount, true);
 
     this->tree.resize(nodeAmount);
     std::iota(this->tree.begin(), this->tree.end(), 0);
 
-    
+    tagEdges();    
 }
 
 Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<int> parents, int labelsAmount) {
@@ -21,17 +23,22 @@ Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<i
     this->nodeAmount    = adj.size();
     this->labelsAmount  = labelsAmount;
     this->rootId        = labelsAmount;
+    this->edgesAmount   = nodeAmount - 1;
 
     this->adj = adj;
     this->parent = parents;
 
+    this->edgeAvailable.assign(edgesAmount, true);
     this->tree.assign(nodeAmount, 0);
     this->visited.assign(nodeAmount, 0);
+
     treeCount = 1;
+
+    tagEdges();
 }
 
 Forest::Forest(const Forest& other) {
-    forestId         = other.forestId;
+    forestId        = other.forestId;
     nodeAmount      = other.nodeAmount;
     labelsAmount    = other.labelsAmount;
     treeCount       = other.treeCount;
@@ -39,6 +46,10 @@ Forest::Forest(const Forest& other) {
     parent          = other.parent;
     tree            = other.tree;
     rootId          = other.rootId;
+    edgeAvailable   = other.edgeAvailable;
+    edgesAmount     = other.edgesAmount;
+    edgeToNode      = other.edgeToNode;
+    nodeToEdge      = other.nodeToEdge;
 }
 
 Forest::~Forest() {}
@@ -97,6 +108,34 @@ int Forest::parentOf(int node) const {
     return parent[node];
 }
 
+void Forest::removeNodeFromAdj(int node) {
+    int ancestor = parent[node];
+
+    parent[node] = -1;
+
+    if (adj[ancestor].first == node) adj[ancestor].first = -1;
+    else adj[ancestor].second = -1;
+}
+
+int Forest::amountOfEdges() const {
+    return edgesAmount;
+}
+
+std::pair<int, int> Forest::nodesOf(int edgeId) const {
+    return edgeToNode[edgeId];
+}
+
+bool Forest::edgeIsAvailable(int edgeId) const {
+    return edgeAvailable[edgeId];
+}
+
+void Forest::removeEdge(int v, int u) {
+    int edgeId = nodeToEdge.at({v,u});
+    nodeToEdge.erase({v, u});
+    edgeToNode[edgeId] = {-1,-1};
+    edgeAvailable[edgeId] = false;
+}
+
 void Forest::cut(int node) {
     int p = parent[node];
 
@@ -105,6 +144,10 @@ void Forest::cut(int node) {
         if (adj[p].second == node) adj[p] = {adj[p].first, -1};
     }
 
+
+    int edgeId = nodeToEdge.at({node, p});
+    edgeAvailable[edgeId] = false;
+
     parent[node] = -1;
 
     tree[node] = treeCount++;
@@ -112,7 +155,6 @@ void Forest::cut(int node) {
     visited.assign(nodeAmount, 0);
 
     updateComponents(node);
-
 }
 
 void Forest::regraft() {
@@ -129,17 +171,31 @@ void Forest::regraft() {
             int descendant  = adj[node].first == -1 ? adj[node].second : adj[node].first;
             int ancestor    = parent[node];
 
-            if (descendant != -1) parent[descendant] = ancestor;
+            if (descendant != -1 and ancestor != -1) {
+                int newEdgeId = nodeToEdge.at({node, ancestor});
+                nodeToEdge.insert({{descendant, ancestor}, newEdgeId});
+                edgeToNode[newEdgeId] = {descendant, ancestor};
 
-            adj[node] = {-1,-1};
-            parent[node] = -1;
+                if (adj[ancestor].first == node) 
+                    adj[ancestor].first = descendant;
+                else 
+                    adj[ancestor].second = descendant;
 
-            if (ancestor == -1) continue;
+                parent[descendant] = ancestor;
 
-            if (adj[ancestor].first == node) 
-                adj[ancestor].first = descendant;
-            else 
-                adj[ancestor].second = descendant;
+                parent[node] = -1;
+                adj[node] = {-1,-1};
+
+                removeEdge(descendant, node);
+                removeEdge(node, ancestor);
+            } else if (descendant == -1) {
+                removeEdge(node, ancestor);
+                removeNodeFromAdj(node);
+            } else {
+                removeEdge(descendant, node);
+                adj[node] = {-1,-1};
+                parent[descendant] = -1;
+            }
         }   
     }
      
@@ -180,8 +236,17 @@ void Forest::updateComponents(int v) {
     }
 }
 
-
-
 bool Forest::nodeInRange(int a) const {
     return 0 <= a and a < nodeAmount;
+}
+
+void Forest::tagEdges() {
+    int edgeCount = 0;
+    edgeToNode.reserve(edgesAmount);
+    nodeToEdge.reserve(edgesAmount);
+    for(int v = 0; v < nodeAmount; v++){
+        if (parent[v] == -1) continue;
+        edgeToNode.push_back({v, parent[v]});
+        nodeToEdge.insert({{v, parent[v]}, edgeCount++});
+    }
 }

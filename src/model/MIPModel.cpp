@@ -7,12 +7,17 @@ MIPModel::MIPModel(MIPForest *F1, MIPForest *F2) {
     model = IloModel(env);
     solver = IloCplex(env);
     solver.setOut(env.getNullStream());
+
+    primalHeuristicVars = IloNumVarArray(env);
+    primalHeuristicVals = IloNumArray(env);
 }
 
 MIPModel::~MIPModel() {
     if (D.getImpl()) D.end();
     if (model.getImpl()) model.end();
     if (solver.getImpl()) solver.end();
+    if (primalHeuristicVars.getImpl()) primalHeuristicVars.end();
+    if (primalHeuristicVals.getImpl()) primalHeuristicVals.end();
     env.end();
 }
 
@@ -33,7 +38,9 @@ void MIPModel::setLowLeafConstraints() {
 
     for(int v = 0; v < F1->labelAmount(); v++) {
         for(int w = v + 1; w < F1->labelAmount(); w++) {
+            if (not F1->sameConnectedComponent(v,w)) continue;
             for(int z = w + 1; z < F1->labelAmount(); z++) {
+                // if (not F1->sameConnectedComponent(w,z))
                 if (not F1->isConflictive(Triple(v,w,z), F2)) continue;
 
                 IloExpr expr(env);
@@ -57,6 +64,23 @@ void MIPModel::setLowLeafConstraints() {
     }
 }
 
+void MIPModel::setDisconnectedLeafConstraint() {
+    for(int v = 0; v < F1->labelAmount(); v++) {
+        for(int w = v + 1; w < F1->labelAmount(); w++) {
+            if (F1->sameConnectedComponent(v,w)) continue;
+
+            IloExpr expr(env);
+            std::string name = "PathCut_" + std::to_string(F2->modId()) + "_" + std::to_string(v) + "_" + std::to_string(w);
+
+            for(int edgeId : F2->pathBetween(v,w))
+                expr += this->D[F2->modId()][edgeId];
+
+            addConstraint(1, expr, IloInfinity, name);
+            expr.end();
+        }
+    }
+}
+
 void MIPModel::setObjective() {
     IloExpr obj(env);
 
@@ -69,32 +93,51 @@ void MIPModel::setObjective() {
 
 void MIPModel::solve(bool exportModel) {
     solver.extract(model);
-    if (exportModel) solver.exportModel(equationsFile.c_str());
-    solver.solve();
+    // solver.addMIPStart(primalHeuristicVars, primalHeuristicVals);
+    if (exportModel) {
+        equationsFile += std::to_string(F1->id()) + "_" + std::to_string(F2->id()) + ".lp";
+        solver.exportModel(equationsFile.c_str());
+    }
+    try {
+        bool ok = solver.solve();
+        std::cerr << "solve=" << ok << " status=" << solver.getStatus() << "\n";
+    } catch (const IloException& e) {
+        std::cerr << "CPLEX exception in solve(): " << e << "\n";
+        throw;
+    }
 }
 
 void MIPModel::addPrimalHeuristic(const std::unordered_set<int> &edgesF1, const std::unordered_set<int> &edgesF2) {
-    IloNumVarArray vars(env);
-    IloNumArray vals(env);
 
     for(int e = 0; e < D[0].getSize(); e++) {
-        vars.add(D[0][e]);
-        vals.add(edgesF1.count(e) ? 1.0 : 0.0);
+        primalHeuristicVars.add(D[0][e]);
+        primalHeuristicVals.add(edgesF1.count(e) ? 1.0 : 0.0);
     }
 
     for(int e = 0; e < D[1].getSize(); e++) {
-        vars.add(D[0][e]);
-        vals.add(edgesF2.count(e) ? 1.0 : 0.0);
+        primalHeuristicVars.add(D[1][e]);
+        primalHeuristicVals.add(edgesF2.count(e) ? 1.0 : 0.0);
     }
 
-    solver.addMIPStart(vars, vals);
-
-    vars.end();
-    vals.end();
 }
 
 int MIPModel::getValueFor(int forestId, int edgeId) const {
-    return solver.getValue(D[forestId][edgeId]);
+    try {
+        return solver.getValue(D[forestId][edgeId]);
+    } catch (const IloException& e) {
+        std::cerr << "CPLEX exception in getValueFor(" << forestId << ", " << edgeId << "): " << e << "\n";
+        throw;
+    }
+}
+
+void MIPModel::exportSolution() const {
+    for(MIPForest* F : {F1, F2}) {
+        std::cout << "F" << F->id() << std::endl;
+        for(int e = 0; e < F->amountOfEdges(); e++) {
+            double value = solver.getValue(this->D[F->modId()][e]);
+            std::cout << e << ": " << value << std::endl;
+        }
+    }
 }
 
 void MIPModel::initializeVariableFor(MIPForest* F) {
@@ -111,13 +154,14 @@ void MIPModel::initializeVariableFor(MIPForest* F) {
 void MIPModel::setPathConstraintsFor(MIPForest* A, MIPForest* B) {
     for(int v = 0; v < A->labelAmount(); v++) {
         for(int w = v + 1; w < A->labelAmount(); w++) {
+            int pathSize = A->pathSize(v,w);
+            if (pathSize == 0 or B->pathSize(v,w) == 0) continue;
+
             IloExpr expr(env);
             std::string name = "Path_" + std::to_string(A->modId()) + "_" + std::to_string(v) + "_" + std::to_string(w);
 
             for(int edgeId : A->pathBetween(v,w))
                 expr += this->D[A->modId()][edgeId];
-
-            int pathSize = A->pathSize(v,w);
 
             for(int edgeId : B->pathBetween(v,w))
                 expr -= pathSize * this->D[B->modId()][edgeId];

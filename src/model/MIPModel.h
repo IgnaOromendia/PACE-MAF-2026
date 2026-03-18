@@ -3,13 +3,13 @@
 
 #include <ilcplex/ilocplex.h>
 #include <memory>
-#include "../service/Instance.h"
 #include "../model/MIPForest.h"
+#include <unordered_set>
 
 class MIPModel {
 private:
     // Equations File
-    std::string equationsFile = "src/data/equations.lp";
+    std::string equationsFile = "src/data/equations";
 
     // Instance
     MIPForest* F1;
@@ -17,6 +17,8 @@ private:
 
     // Variables
     IloArray<IloIntVarArray> D;
+    IloNumVarArray primalHeuristicVars;
+    IloNumArray primalHeuristicVals;
 
     // CPLEX
     IloEnv env;
@@ -42,10 +44,12 @@ public:
     void generateVariables();
     void setPathConstraints();
     void setLowLeafConstraints();
+    void setDisconnectedLeafConstraint();
     void setObjective();
     void solve(bool exportModel = false);
     void addPrimalHeuristic(const std::unordered_set<int>& edgesF1, const std::unordered_set<int>& edgesF2);
     int getValueFor(int forestId, int edgeId) const;
+    void exportSolution() const;
 };
 
 

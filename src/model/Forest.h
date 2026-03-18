@@ -5,16 +5,31 @@
 #include <numeric>
 #include <utility>
 #include <vector>
+#include <unordered_map>
+#include <cstddef>
+
+
+struct EdgeHash {
+    std::size_t operator()(const std::pair<int, int>& p) const {
+        std::size_t h1 = std::hash<int>{}(p.first);
+        std::size_t h2 = std::hash<int>{}(p.second);
+        return h1 ^ (h2 << 1);
+    }
+};
 
 class Forest {
 protected:
-    int forestId, nodeAmount, labelsAmount, treeCount, rootId;
+    int edgesAmount, forestId, nodeAmount, labelsAmount, treeCount, rootId;
 
     std::vector<std::pair<int, int> > adj;
     std::vector<int> parent, tree, visited;
+    std::vector<bool> edgeAvailable;
+    std::vector<std::pair<int, int>> edgeToNode;
+    std::unordered_map<std::pair<int,int>, int, EdgeHash> nodeToEdge;
     
     void updateComponents(int v);
     bool nodeInRange(int a) const;
+    void tagEdges();
 
 public:
     Forest(int forestId, int nodeAmount) : Forest(forestId, nodeAmount, nodeAmount) {};
@@ -36,6 +51,13 @@ public:
     bool isLeaf(int a) const;
     std::pair<int, int> childrenOf(int node) const;
     int parentOf(int node) const;
+    void removeNodeFromAdj(int node);
+
+    // Edges
+    int amountOfEdges() const;
+    std::pair<int, int> nodesOf(int edgeId) const;
+    bool edgeIsAvailable(int edgeId) const;
+    void removeEdge(int v, int u);
     
     // Forest Operations
     void cut(int node);

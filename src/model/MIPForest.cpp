@@ -1,40 +1,39 @@
 #include "MIPForest.h"
 #include <algorithm>
 
-MIPForest::MIPForest(int forestId, int nodeAmount, int labelAmount) : Forest(forestId, nodeAmount, labelAmount) {
-    tagEdges();
-    precomputPaths();
-}
+MIPForest::MIPForest(int forestId, int nodeAmount, int labelAmount) : Forest(forestId, nodeAmount, labelAmount) {}
 
-MIPForest::MIPForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int labelAmount): Forest(forestId, adjacency, parents, labelAmount) {
-    tagEdges();
-    precomputPaths();
-}
+MIPForest::MIPForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int labelAmount): Forest(forestId, adjacency, parents, labelAmount) {}
 
-MIPForest::MIPForest(const MIPForest &other): Forest(other) {
-    this->edgeToNode = other.edgeToNode;
-    this->nodeToEdge = other.nodeToEdge;
-    this->paths = other.paths;
-    this->edgesAmount = other.edgesAmount;
-}
+MIPForest::MIPForest(const MIPForest &other): Forest(other) {}
 
-MIPForest::MIPForest(const Forest &other): Forest(other) {
-    tagEdges();
-    precomputPaths();
-}
+MIPForest::MIPForest(const Forest &other): Forest(other) {}
 
 MIPForest::~MIPForest() {}
 
 int MIPForest::modId() const {
-    return id() % 2;
-}
-
-int MIPForest::amountOfEdges() const {
-    return this->edgesAmount;
+    return id() == 0 ? 0 : 1;
 }
 
 std::vector<int> MIPForest::pathBetween(int v, int w) const {
-    return paths.at({v,w});
+    std::vector<int> path;
+
+    if (sameConnectedComponent(v,w)) {
+        int u = LCA(v, w);
+    
+        walkAndAdd(v, u, path);
+
+        std::vector<int> halfPath;
+
+        walkAndAdd(w, u, halfPath);
+
+        path.reserve(path.size() + halfPath.size());
+
+        for(int i = halfPath.size() - 1; i >= 0; i--)
+            path.push_back(halfPath[i]);
+    }
+
+    return path;
 }
 
 int MIPForest::pathSize(int v, int w) const {
@@ -54,10 +53,6 @@ void MIPForest::printEdgeIds() const {
         std::cout << id << ": " << nodes.first << " - " << nodes.second << "\n";
 }
 
-std::pair<int, int> MIPForest::nodesOf(int edgeId) const {
-    return edgeToNode[edgeId];
-}
-
 void MIPForest::walkAndAdd(int from, int to, std::vector<int>& path) const {
     int curr = parent[from];
     int prev = from;
@@ -67,43 +62,6 @@ void MIPForest::walkAndAdd(int from, int to, std::vector<int>& path) const {
         prev = curr;
         curr = parent[curr];
     }
-}
-
-void MIPForest::precomputPaths() {
-    for (int v = 0; v < nodeAmount; v++) {
-        if (not isLeaf(v)) continue;
-
-        for(int w = v + 1; w < nodeAmount; w++) {
-            if (not isLeaf(w)) continue;
-            
-            std::vector<int> path, halfPath;
-            int u = LCA(v, w);
-            
-            walkAndAdd(v, u, path);
-
-            walkAndAdd(w, u, halfPath);
-
-            path.reserve(path.size() + halfPath.size());
-
-            for(int i = halfPath.size() - 1; i >= 0; i--)
-                path.push_back(halfPath[i]);
-
-            paths.insert({{v,w}, path});
-            paths.insert({{w,v}, path});
-        }
-    }
-}
-
-void MIPForest::tagEdges() {
-    int edgeCount = 0;
-    edgeToNode.reserve(nodeAmount - 1);
-    nodeToEdge.reserve(nodeAmount - 1);
-    for(int v = 0; v < nodeAmount; v++){
-        if (parent[v] == -1) continue;
-        edgeToNode.push_back({v, parent[v]});
-        nodeToEdge.insert({{v, parent[v]}, edgeCount++});
-    }
-    this->edgesAmount = edgeCount;
 }
 
 std::pair<int,int> MIPForest::low(const Triple& t) const {
@@ -120,7 +78,9 @@ std::pair<int,int> MIPForest::low(const Triple& t) const {
 void MIPForest::conflictiveTriples(const MIPForest* F, std::vector<Triple>& conflictive) const {
     for(int v = 0; v < labelAmount(); v++) {
         for(int w = v + 1; w < labelAmount(); w++) {
+            if (not sameConnectedComponent(v,w)) continue;
             for(int z = w + 1; z < labelAmount(); z++) {
+                if (not sameConnectedComponent(w,z)) continue;
                 Triple t = Triple(v,w,z);
                 if (low(t) != F->low(t))
                     conflictive.push_back(t);
@@ -130,5 +90,6 @@ void MIPForest::conflictiveTriples(const MIPForest* F, std::vector<Triple>& conf
 }
 
 bool MIPForest::isConflictive(const Triple &t, const MIPForest *F) const {
+    if (not sameConnectedComponent(t.i, t.j) or not sameConnectedComponent(t.i, t.k) or not sameConnectedComponent(t.j, t.k)) return false;
     return low(t) != F->low(t);
 }

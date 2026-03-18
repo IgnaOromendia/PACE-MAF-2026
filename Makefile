@@ -37,7 +37,7 @@ run-all: $(TARGET)
 	done
 
 debug: $(TARGET)
-	@./$(TARGET) < $(DIR_TEST)/test03.nw
+	@./$(TARGET) < $(DIR_TEST)/test04.nw
 
 test: $(TARGET)
 	@for file in $(DIR_TEST)/*.nw; do \

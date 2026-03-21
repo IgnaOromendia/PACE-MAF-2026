@@ -10,6 +10,9 @@ MIPModel::MIPModel(MIPForest *F1, MIPForest *F2) {
 
     primalHeuristicVars = IloNumVarArray(env);
     primalHeuristicVals = IloNumArray(env);
+
+    // PARAMS
+    solver.setParam(IloCplex::Param::TimeLimit, 30.0);
 }
 
 MIPModel::~MIPModel() {
@@ -99,8 +102,13 @@ void MIPModel::solve(bool exportModel) {
         solver.exportModel(equationsFile.c_str());
     }
     try {
+        const auto start = std::chrono::steady_clock::now();
         bool ok = solver.solve();
-        std::cerr << "solve=" << ok << " status=" << solver.getStatus() << "\n";
+        const auto end = std::chrono::steady_clock::now();
+        const std::chrono::duration<double> elapsed = end - start;
+        std::cerr << "solve=" << ok
+                  << " status=" << solver.getStatus()
+                  << " time=" << elapsed.count() << "s\n";
     } catch (const IloException& e) {
         std::cerr << "CPLEX exception in solve(): " << e << "\n";
         throw;
@@ -123,7 +131,8 @@ void MIPModel::addPrimalHeuristic(const std::unordered_set<int> &edgesF1, const 
 
 int MIPModel::getValueFor(int forestId, int edgeId) const {
     try {
-        return solver.getValue(D[forestId][edgeId]);
+        const double value = solver.getValue(D[forestId][edgeId]);
+        return value >= 0.5 ? 1 : 0;
     } catch (const IloException& e) {
         std::cerr << "CPLEX exception in getValueFor(" << forestId << ", " << edgeId << "): " << e << "\n";
         throw;

@@ -173,7 +173,12 @@ void Forest::regraft() {
 
             if (descendant != -1 and ancestor != -1) {
                 int newEdgeId = nodeToEdge.at({node, ancestor});
+
+                removeEdge(descendant, node);
+                removeEdge(node, ancestor);
+
                 nodeToEdge.insert({{descendant, ancestor}, newEdgeId});
+                edgeAvailable[newEdgeId] = true;
                 edgeToNode[newEdgeId] = {descendant, ancestor};
 
                 if (adj[ancestor].first == node) 
@@ -185,9 +190,6 @@ void Forest::regraft() {
 
                 parent[node] = -1;
                 adj[node] = {-1,-1};
-
-                removeEdge(descendant, node);
-                removeEdge(node, ancestor);
             } else if (descendant == -1) {
                 removeEdge(node, ancestor);
                 removeNodeFromAdj(node);

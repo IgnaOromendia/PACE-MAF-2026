@@ -15,16 +15,16 @@ MIPForest* MIPSolver::solve(Instance& instance) {
     
     while(index < forests.size()) {
         // std::cout << "--------- " << index << " ---------\n";
-        F = solveFor(F, forests[index++]);
+        solveFor(F, forests[index++]);
     }
         
 
     return F;
 }
 
-MIPForest* MIPSolver::solveFor(MIPForest* F1, MIPForest* F2) {
+void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
     // Inicializa modelo
-    mip = std::make_unique<MIPModel>(F1, F2);
+    mip = std::make_unique<MIPModel>(MAFCandidate, F);
 
     // F1->printAdjAndParents();
     // F1->printEdgeIds();
@@ -36,8 +36,8 @@ MIPForest* MIPSolver::solveFor(MIPForest* F1, MIPForest* F2) {
     mip->generateVariables();
 
     std::unordered_set<int> edgesF1, edgesF2;
-    MIPForest H1(*F1);
-    MIPForest H2(*F2);
+    MIPForest H1(*MAFCandidate);
+    MIPForest H2(*F);
 
     computeConflictiveEdges(&H1, &H2, edgesF1, edgesF2);
     mip->addPrimalHeuristic(edgesF1, edgesF2);
@@ -51,30 +51,25 @@ MIPForest* MIPSolver::solveFor(MIPForest* F1, MIPForest* F2) {
     mip->solve();
     // mip->exportSolution();
 
-
-    MIPForest* MAF = pruneAndRegraft(F1);
-    // MAF->printAdjAndParents();
-
-    return MAF;
+    pruneAndRegraft(MAFCandidate);
+    // F1->printAdjAndParents();
 }
 
-MIPForest* MIPSolver::pruneAndRegraft(MIPForest* F) const {
-    MIPForest* newForest = new MIPForest(*F);
+void MIPSolver::pruneAndRegraft(MIPForest* F) const {
 
     // Cutting and Regraft
-    for(int e = 0; e < newForest->amountOfEdges(); e++) {
-        int cutting = mip->getValueFor(newForest->modId(), e);
+    for(int e = 0; e < F->amountOfEdges(); e++) {
+        int cutting = mip->getValueFor(F->modId(), e);
 
-        if (not cutting or not newForest->edgeIsAvailable(e)) continue;
+        if (not cutting or not F->edgeIsAvailable(e)) continue;
 
-        auto [descendant, ancestor] = newForest->nodesOf(e);
+        auto [descendant, ancestor] = F->nodesOf(e);
 
-        newForest->cut(descendant);
+        F->cut(descendant);
     }
 
-    newForest->regraft();
+    F->regraft();
 
-    return newForest;
 }
 
 void MIPSolver::computeConflictiveEdges(MIPForest* F1, MIPForest* F2, std::unordered_set<int>& edgesF1, std::unordered_set<int>& edgesF2) const {

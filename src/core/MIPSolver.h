@@ -12,8 +12,8 @@ private:
     // Model
     std::unique_ptr<MIPModel> mip;
 
-    MIPForest* solveFor(MIPForest* F1, MIPForest* F2);
-    MIPForest* pruneAndRegraft(MIPForest* F) const;
+    void solveFor(MIPForest* F1, MIPForest* F2);
+    void pruneAndRegraft(MIPForest* F) const;
 
     // Primal
     void computeConflictiveEdges(MIPForest* F1, MIPForest* F2, std::unordered_set<int>& edgesF1, std::unordered_set<int>& edgesF2) const;

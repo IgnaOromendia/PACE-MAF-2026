@@ -11,11 +11,13 @@ Forest::Forest(int forestId, int nodeAmount, int labelAmount) {
     this->adj.assign(nodeAmount, {-1, -1});
     this->parent.assign(nodeAmount, -1);
     this->edgeAvailable.assign(edgesAmount, true);
+    this->leafsForEdge.assign(edgesAmount, std::unordered_set<std::pair<int, int>, EdgeHash>());
 
     this->tree.resize(nodeAmount);
     std::iota(this->tree.begin(), this->tree.end(), 0);
 
-    tagEdges();    
+    tagEdges();   
+    precomputPaths(); 
 }
 
 Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<int> parents, int labelsAmount) {
@@ -31,10 +33,12 @@ Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<i
     this->edgeAvailable.assign(edgesAmount, true);
     this->tree.assign(nodeAmount, 0);
     this->visited.assign(nodeAmount, 0);
+    this->leafsForEdge.assign(edgesAmount, std::unordered_set<std::pair<int, int>, EdgeHash>());
 
     treeCount = 1;
 
     tagEdges();
+    precomputPaths();
 }
 
 Forest::Forest(const Forest& other) {
@@ -50,6 +54,8 @@ Forest::Forest(const Forest& other) {
     edgesAmount     = other.edgesAmount;
     edgeToNode      = other.edgeToNode;
     nodeToEdge      = other.nodeToEdge;
+    paths           = other.paths;
+    leafsForEdge    = other.leafsForEdge;
 }
 
 Forest::~Forest() {}
@@ -113,6 +119,8 @@ void Forest::removeNodeFromAdj(int node) {
 
     parent[node] = -1;
 
+    if (ancestor == -1) return;
+
     if (adj[ancestor].first == node) adj[ancestor].first = -1;
     else adj[ancestor].second = -1;
 }
@@ -136,17 +144,25 @@ void Forest::removeEdge(int v, int u) {
     edgeAvailable[edgeId] = false;
 }
 
+std::vector<int> Forest::pathBetween(int v, int w) const {
+    if(not sameConnectedComponent(v,w)) return std::vector<int>();
+    return paths.at({v,w});
+}
+
+int Forest::pathSize(int v, int w) const {
+    return pathBetween(v,w).size();
+}
+
 void Forest::cut(int node) {
     int p = parent[node];
 
     if (p != -1) {
         if (adj[p].first == node) adj[p] = {-1, adj[p].second};
         if (adj[p].second == node) adj[p] = {adj[p].first, -1};
+
+        int edgeId = nodeToEdge.at({node, p});
+        edgeAvailable[edgeId] = false;
     }
-
-
-    int edgeId = nodeToEdge.at({node, p});
-    edgeAvailable[edgeId] = false;
 
     parent[node] = -1;
 
@@ -172,7 +188,9 @@ void Forest::regraft() {
             int ancestor    = parent[node];
 
             if (descendant != -1 and ancestor != -1) {
-                int newEdgeId = nodeToEdge.at({node, ancestor});
+                int descendantEdge = nodeToEdge.at({descendant, node});
+                int ancestorEdge = nodeToEdge.at({node, ancestor});
+                int newEdgeId = ancestorEdge;
 
                 removeEdge(descendant, node);
                 removeEdge(node, ancestor);
@@ -189,7 +207,44 @@ void Forest::regraft() {
                 parent[descendant] = ancestor;
 
                 parent[node] = -1;
-                adj[node] = {-1,-1};
+                adj[node] = {-1,-1}; 
+
+                // printAdjAndParents();
+
+                // std::cout << leafsForEdge.size() << "\n";
+
+                // std::cout << "leafsForEdge[" << descendantEdge << "] size="
+                //           << leafsForEdge[descendantEdge].size() << ": ";
+                // for (const auto& [v, u] : leafsForEdge[descendantEdge])
+                //     std::cout << "(" << v << "," << u << ") ";
+                // std::cout << "\n";
+
+                // std::cout << "leafsForEdge[" << ancestorEdge << "] size="
+                //           << leafsForEdge[ancestorEdge].size() << ": ";
+                // for (const auto& [v, u] : leafsForEdge[ancestorEdge])
+                //     std::cout << "(" << v << "," << u << ") ";
+                // std::cout << "\n";
+
+                std::unordered_set<std::pair<int, int>, EdgeHash> affectedLeafs = leafsForEdge[descendantEdge];
+                affectedLeafs.insert(leafsForEdge[ancestorEdge].begin(), leafsForEdge[ancestorEdge].end());
+
+                // std::cout << "affectedLeafs " << "size="
+                //           << affectedLeafs.size() << ": ";
+                // for (const auto& [v, u] : affectedLeafs)
+                //     std::cout << "(" << v << "," << u << ") ";
+                // std::cout << "\n";
+
+                for(auto& [v, u] : affectedLeafs) {
+                    if (not sameConnectedComponent(v,u)) continue;
+
+                    // std::cout << v << " " << u << "\n";
+
+                    auto& path = paths.at({v, u});
+                    path.erase(std::remove(path.begin(), path.end(), descendantEdge), path.end());
+
+                    paths.insert({{u,v}, paths.at({v,u})}); // capaz no es necesario
+                }
+
             } else if (descendant == -1) {
                 removeEdge(node, ancestor);
                 removeNodeFromAdj(node);
@@ -250,5 +305,44 @@ void Forest::tagEdges() {
         if (parent[v] == -1) continue;
         edgeToNode.push_back({v, parent[v]});
         nodeToEdge.insert({{v, parent[v]}, edgeCount++});
+    }
+}
+
+void Forest::walkAndAdd(int from, int lca, int to, std::vector<int> &path) {
+    int curr = parent[from];
+    int prev = from;
+
+    while(prev != lca) {
+        int edgeId = nodeToEdge.at({prev, curr});
+        path.push_back(edgeId);
+        leafsForEdge[edgeId].insert({std::min(from, to), std::max(from, to)});
+        prev = curr;
+        curr = parent[curr];
+    }
+}
+
+void Forest::precomputPaths() {
+    for (int v = 0; v < labelsAmount; v++) {
+        for (int w = v + 1; w < labelsAmount; w++) {
+            std::vector<int> path;
+
+            if (sameConnectedComponent(v,w)) {
+                int u = LCA(v, w);
+            
+                walkAndAdd(v, u, w, path);
+
+                std::vector<int> halfPath;
+
+                walkAndAdd(w, u, v, halfPath);
+
+                path.reserve(path.size() + halfPath.size());
+
+                for(int i = halfPath.size() - 1; i >= 0; i--)
+                    path.push_back(halfPath[i]);
+            }
+
+            paths.insert({{v,w}, path});
+            paths.insert({{w,v}, path}); // puede q no sea necesario
+        }
     }
 }

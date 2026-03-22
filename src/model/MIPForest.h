@@ -14,11 +14,6 @@ struct Triple {
 
 class MIPForest: public Forest {
 private:
-    
-    // std::unordered_map<std::pair<int,int>, std::vector<int> , EdgeHash> paths;
-
-    void walkAndAdd(int from, int to, std::vector<int>& path) const;
-    void precomputPaths();
 
 public:
     MIPForest(int forestId, int nodeAmount, int labelAmount);
@@ -30,10 +25,7 @@ public:
     int modId() const;
 
     // Edges
-    std::vector<int> pathBetween(int v, int w) const;
-    int pathSize(int v, int w) const;
     void printEdgeIds() const;
-    
 
     // Triples
     std::pair<int,int> low(const Triple& t) const;

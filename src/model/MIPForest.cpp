@@ -15,31 +15,6 @@ int MIPForest::modId() const {
     return id() == 0 ? 0 : 1;
 }
 
-std::vector<int> MIPForest::pathBetween(int v, int w) const {
-    std::vector<int> path;
-
-    if (sameConnectedComponent(v,w)) {
-        int u = LCA(v, w);
-    
-        walkAndAdd(v, u, path);
-
-        std::vector<int> halfPath;
-
-        walkAndAdd(w, u, halfPath);
-
-        path.reserve(path.size() + halfPath.size());
-
-        for(int i = halfPath.size() - 1; i >= 0; i--)
-            path.push_back(halfPath[i]);
-    }
-
-    return path;
-}
-
-int MIPForest::pathSize(int v, int w) const {
-    return pathBetween(v,w).size();
-}
-
 void MIPForest::printEdgeIds() const {
     std::vector<std::pair<int, std::pair<int, int>>> edges;
     edges.reserve(nodeToEdge.size());
@@ -51,17 +26,6 @@ void MIPForest::printEdgeIds() const {
 
     for (const auto& [id, nodes] : edges)
         std::cout << id << ": " << nodes.first << " - " << nodes.second << "\n";
-}
-
-void MIPForest::walkAndAdd(int from, int to, std::vector<int>& path) const {
-    int curr = parent[from];
-    int prev = from;
-
-    while(prev != to) {
-        path.push_back(nodeToEdge.at({prev, curr}));
-        prev = curr;
-        curr = parent[curr];
-    }
 }
 
 std::pair<int,int> MIPForest::low(const Triple& t) const {

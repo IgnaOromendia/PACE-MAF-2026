@@ -3,7 +3,6 @@
 
 #include "../model/MIPModel.h"
 #include "../service/Instance.h"
-#include <unordered_set>
 
 class MIPSolver {
 private:

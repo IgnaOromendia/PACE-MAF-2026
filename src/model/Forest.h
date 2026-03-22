@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include <cstddef>
+#include <unordered_set>
 
 
 struct EdgeHash {
@@ -26,10 +27,14 @@ protected:
     std::vector<bool> edgeAvailable;
     std::vector<std::pair<int, int>> edgeToNode;
     std::unordered_map<std::pair<int,int>, int, EdgeHash> nodeToEdge;
+    std::unordered_map<std::pair<int,int>, std::vector<int> , EdgeHash> paths;
+    std::vector<std::unordered_set<std::pair<int, int>, EdgeHash>> leafsForEdge;
     
     void updateComponents(int v);
     bool nodeInRange(int a) const;
     void tagEdges();
+    void walkAndAdd(int from, int lca, int to, std::vector<int>& path);
+    void precomputPaths();
 
 public:
     Forest(int forestId, int nodeAmount) : Forest(forestId, nodeAmount, nodeAmount) {};
@@ -58,6 +63,8 @@ public:
     std::pair<int, int> nodesOf(int edgeId) const;
     bool edgeIsAvailable(int edgeId) const;
     void removeEdge(int v, int u);
+    std::vector<int> pathBetween(int v, int w) const;
+    int pathSize(int v, int w) const;
     
     // Forest Operations
     void cut(int node);

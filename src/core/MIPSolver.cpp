@@ -51,6 +51,7 @@ MIPForest* MIPSolver::solveFor(MIPForest* F1, MIPForest* F2) {
     mip->solve();
     // mip->exportSolution();
 
+
     MIPForest* MAF = pruneAndRegraft(F1);
     // MAF->printAdjAndParents();
 

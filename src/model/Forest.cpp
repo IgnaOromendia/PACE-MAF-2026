@@ -189,8 +189,7 @@ void Forest::regraft() {
 
             if (descendant != -1 and ancestor != -1) {
                 int descendantEdge = nodeToEdge.at({descendant, node});
-                int ancestorEdge = nodeToEdge.at({node, ancestor});
-                int newEdgeId = ancestorEdge;
+                int newEdgeId = nodeToEdge.at({node, ancestor});;
 
                 removeEdge(descendant, node);
                 removeEdge(node, ancestor);
@@ -209,41 +208,7 @@ void Forest::regraft() {
                 parent[node] = -1;
                 adj[node] = {-1,-1}; 
 
-                // printAdjAndParents();
-
-                // std::cout << leafsForEdge.size() << "\n";
-
-                // std::cout << "leafsForEdge[" << descendantEdge << "] size="
-                //           << leafsForEdge[descendantEdge].size() << ": ";
-                // for (const auto& [v, u] : leafsForEdge[descendantEdge])
-                //     std::cout << "(" << v << "," << u << ") ";
-                // std::cout << "\n";
-
-                // std::cout << "leafsForEdge[" << ancestorEdge << "] size="
-                //           << leafsForEdge[ancestorEdge].size() << ": ";
-                // for (const auto& [v, u] : leafsForEdge[ancestorEdge])
-                //     std::cout << "(" << v << "," << u << ") ";
-                // std::cout << "\n";
-
-                std::unordered_set<std::pair<int, int>, EdgeHash> affectedLeafs = leafsForEdge[descendantEdge];
-                affectedLeafs.insert(leafsForEdge[ancestorEdge].begin(), leafsForEdge[ancestorEdge].end());
-
-                // std::cout << "affectedLeafs " << "size="
-                //           << affectedLeafs.size() << ": ";
-                // for (const auto& [v, u] : affectedLeafs)
-                //     std::cout << "(" << v << "," << u << ") ";
-                // std::cout << "\n";
-
-                for(auto& [v, u] : affectedLeafs) {
-                    if (not sameConnectedComponent(v,u)) continue;
-
-                    // std::cout << v << " " << u << "\n";
-
-                    auto& path = paths.at({v, u});
-                    path.erase(std::remove(path.begin(), path.end(), descendantEdge), path.end());
-
-                    paths.insert({{u,v}, paths.at({v,u})}); // capaz no es necesario
-                }
+                updatePathsRemoving(descendantEdge);
 
             } else if (descendant == -1) {
                 removeEdge(node, ancestor);
@@ -282,7 +247,6 @@ void Forest::updateComponents(int v) {
             tree[u] = tree[v];
             updateComponents(u);
         }
-        
     }
 
     if (w != -1) {
@@ -344,5 +308,18 @@ void Forest::precomputPaths() {
             paths.insert({{v,w}, path});
             paths.insert({{w,v}, path}); // puede q no sea necesario
         }
+    }
+}
+
+void Forest::updatePathsRemoving(int descendantEdge) {
+    std::unordered_set<std::pair<int, int>, EdgeHash> affectedLeafs = leafsForEdge[descendantEdge];
+
+    for(auto& [v, u] : affectedLeafs) {
+        if (not sameConnectedComponent(v,u)) continue;
+
+        auto& path = paths.at({v, u});
+        path.erase(std::remove(path.begin(), path.end(), descendantEdge), path.end());
+
+        paths.insert({{u,v}, paths.at({v,u})}); // capaz no es necesario
     }
 }

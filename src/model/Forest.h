@@ -35,6 +35,7 @@ protected:
     void tagEdges();
     void walkAndAdd(int from, int lca, int to, std::vector<int>& path);
     void precomputPaths();
+    void updatePathsRemoving(int descendantEdge);
 
 public:
     Forest(int forestId, int nodeAmount) : Forest(forestId, nodeAmount, nodeAmount) {};

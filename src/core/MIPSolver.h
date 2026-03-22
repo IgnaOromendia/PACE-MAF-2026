@@ -1,7 +1,7 @@
 #ifndef MIPSOLVER_H
 #define MIPSOLVER_H
 
-#include "../model/MIPModel.h"
+#include "../model/PathMIPModel.h"
 #include "../service/Instance.h"
 
 class MIPSolver {
@@ -22,7 +22,7 @@ public:
     MIPSolver();
     ~MIPSolver();
 
-    MIPForest* solve(Instance& instance);
+    void solve(Instance& instance);
 };
 
 

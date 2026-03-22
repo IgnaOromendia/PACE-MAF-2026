@@ -8,7 +8,7 @@
 #include <chrono>
 
 class MIPModel {
-private:
+protected:
     // Equations File
     std::string equationsFile = "src/data/equations";
 
@@ -27,26 +27,27 @@ private:
     IloModel model;
 
     // Model
-    void initializeVariableFor(MIPForest* F);
-    void setPathConstraintsFor(MIPForest* A, MIPForest* B);
+    void initializeDVariableFor(MIPForest* F);
 
     // CPLEX helps
     void addConstraint(IloNum lhs, IloExpr& expr, IloNum rhs, std::string name);
 
+    // Preprocessing
+    void pruneSiblings();
+
 public:
     MIPModel(): F1(nullptr), F2(nullptr) {};
     MIPModel(MIPForest* F1, MIPForest* F2);
-    ~MIPModel();
+    virtual ~MIPModel();
     MIPModel(const MIPModel&) = delete;
     MIPModel& operator=(const MIPModel&) = delete;
     MIPModel(MIPModel&&) = delete;
     MIPModel& operator=(MIPModel&&) = delete;
 
-    void generateVariables();
-    void setPathConstraints();
-    void setLowLeafConstraints();
-    void setDisconnectedLeafConstraint();
-    void setObjective();
+    virtual void generateVariables();
+    virtual void setConstraints() = 0;
+    virtual void setObjective() = 0;
+    
     void solve(bool exportModel = false);
     void addPrimalHeuristic(const std::unordered_set<int>& edgesF1, const std::unordered_set<int>& edgesF2);
     int getValueFor(int forestId, int edgeId) const;

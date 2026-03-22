@@ -34,7 +34,9 @@ protected:
     bool nodeInRange(int a) const;
     void tagEdges();
     void walkAndAdd(int from, int lca, int to, std::vector<int>& path);
-    void precomputPaths();
+    void precomputeLeafPaths();
+    void precomputeAllPaths();
+    void precomputePaths(int limit);
     void updatePathsRemoving(int descendantEdge);
 
 public:
@@ -46,7 +48,7 @@ public:
 
     int id() const;
 
-    // Amountos
+    // Amounts
     int labelAmount() const;
     int amountOfTrees() const;
     int amountOfNodes() const;
@@ -58,6 +60,7 @@ public:
     std::pair<int, int> childrenOf(int node) const;
     int parentOf(int node) const;
     void removeNodeFromAdj(int node);
+    int sibling(int node) const;
 
     // Edges
     int amountOfEdges() const;

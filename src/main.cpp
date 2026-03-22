@@ -6,11 +6,7 @@ int main() {
 
     MIPSolver mipSolver = MIPSolver();
 
-    MIPForest* MAF = mipSolver.solve(instance);
-
-    instance.exportOutput(MAF);
-
-    delete MAF;
+    mipSolver.solve(instance);
     
     return 0;
 }

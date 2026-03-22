@@ -6,7 +6,7 @@ MIPSolver::~MIPSolver() {
     for(MIPForest* F: forests) delete F;
 }
 
-MIPForest* MIPSolver::solve(Instance& instance) {
+void MIPSolver::solve(Instance& instance) {
     forests = instance.mipTrees();
 
     size_t index = 1;
@@ -17,14 +17,13 @@ MIPForest* MIPSolver::solve(Instance& instance) {
         // std::cout << "--------- " << index << " ---------\n";
         solveFor(F, forests[index++]);
     }
-        
 
-    return F;
+    instance.exportOutput(F);
 }
 
 void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
     // Inicializa modelo
-    mip = std::make_unique<MIPModel>(MAFCandidate, F);
+    mip = std::make_unique<PathMIPModel>(MAFCandidate, F);
 
     // F1->printAdjAndParents();
     // F1->printEdgeIds();
@@ -42,9 +41,7 @@ void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
     computeConflictiveEdges(&H1, &H2, edgesF1, edgesF2);
     mip->addPrimalHeuristic(edgesF1, edgesF2);
 
-    mip->setPathConstraints();
-    mip->setLowLeafConstraints();
-    mip->setDisconnectedLeafConstraint();
+    mip->setConstraints();
     mip->setObjective();
     
     // Solve

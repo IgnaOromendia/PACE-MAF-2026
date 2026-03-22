@@ -17,7 +17,7 @@ Forest::Forest(int forestId, int nodeAmount, int labelAmount) {
     std::iota(this->tree.begin(), this->tree.end(), 0);
 
     tagEdges();   
-    precomputPaths(); 
+    precomputeAllPaths(); 
 }
 
 Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<int> parents, int labelsAmount) {
@@ -38,7 +38,7 @@ Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<i
     treeCount = 1;
 
     tagEdges();
-    precomputPaths();
+    precomputeAllPaths();
 }
 
 Forest::Forest(const Forest& other) {
@@ -123,6 +123,18 @@ void Forest::removeNodeFromAdj(int node) {
 
     if (adj[ancestor].first == node) adj[ancestor].first = -1;
     else adj[ancestor].second = -1;
+}
+
+int Forest::sibling(int node) const {
+    if (parent[node] == -1) return -1;
+
+    if (adj[node].first == node) 
+        return adj[node].second < labelsAmount ? adj[node].second : -1;
+    
+    if (adj[node].second == node) 
+        return adj[node].first < labelsAmount ? adj[node].first : -1;
+
+    return -1;
 }
 
 int Forest::amountOfEdges() const {
@@ -220,7 +232,6 @@ void Forest::regraft() {
             }
         }   
     }
-     
 }
 
 int Forest::root() const{
@@ -285,9 +296,17 @@ void Forest::walkAndAdd(int from, int lca, int to, std::vector<int> &path) {
     }
 }
 
-void Forest::precomputPaths() {
-    for (int v = 0; v < labelsAmount; v++) {
-        for (int w = v + 1; w < labelsAmount; w++) {
+void Forest::precomputeLeafPaths() {
+    precomputePaths(labelsAmount);
+}
+
+void Forest::precomputeAllPaths() {
+    precomputePaths(nodeAmount);
+}
+
+void Forest::precomputePaths(int limit) {
+    for (int v = 0; v < limit; v++) {
+        for (int w = v + 1; w < limit; w++) {
             std::vector<int> path;
 
             if (sameConnectedComponent(v,w)) {

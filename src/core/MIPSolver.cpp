@@ -35,12 +35,12 @@ MIPForest* MIPSolver::solveFor(MIPForest* F1, MIPForest* F2) {
     // MIP generation
     mip->generateVariables();
 
-    // std::unordered_set<int> edgesF1, edgesF2;
-    // MIPForest H1(*F1);
-    // MIPForest H2(*F2);
+    std::unordered_set<int> edgesF1, edgesF2;
+    MIPForest H1(*F1);
+    MIPForest H2(*F2);
 
-    // computeConflictiveEdges(&H1, &H2, edgesF1, edgesF2);
-    // mip->addPrimalHeuristic(edgesF1, edgesF2);
+    computeConflictiveEdges(&H1, &H2, edgesF1, edgesF2);
+    mip->addPrimalHeuristic(edgesF1, edgesF2);
 
     mip->setPathConstraints();
     mip->setLowLeafConstraints();
@@ -52,7 +52,6 @@ MIPForest* MIPSolver::solveFor(MIPForest* F1, MIPForest* F2) {
     // mip->exportSolution();
 
     MIPForest* MAF = pruneAndRegraft(F1);
-
     // MAF->printAdjAndParents();
 
     return MAF;

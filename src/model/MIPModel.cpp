@@ -6,13 +6,14 @@ MIPModel::MIPModel(MIPForest *F1, MIPForest *F2) {
 
     model = IloModel(env);
     solver = IloCplex(env);
-    solver.setOut(env.getNullStream());
 
     primalHeuristicVars = IloNumVarArray(env);
     primalHeuristicVals = IloNumArray(env);
 
     // PARAMS
-    solver.setParam(IloCplex::Param::TimeLimit, 30.0);
+    solver.setOut(env.getNullStream());
+    solver.setParam(IloCplex::Param::Threads, 1);
+    // solver.setParam(IloCplex::Param::TimeLimit, 30.0);
 }
 
 MIPModel::~MIPModel() {
@@ -108,7 +109,7 @@ void MIPModel::solve(bool exportModel) {
         const std::chrono::duration<double> elapsed = end - start;
         std::cerr << "solve=" << ok
                   << " status=" << solver.getStatus()
-                  << " time=" << elapsed.count() << "s\n";
+                  << " solverTime=" << elapsed.count() << "s\n";
     } catch (const IloException& e) {
         std::cerr << "CPLEX exception in solve(): " << e << "\n";
         throw;

@@ -23,13 +23,14 @@ void MIPSolver::solve(Instance& instance) {
 
 void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
     // Inicializa modelo
-    mip = std::make_unique<PathMIPModel>(MAFCandidate, F);
+    // mip = std::make_unique<PathMIPModel>(MAFCandidate, F);
+    mip = std::make_unique<PairMIPModel>(MAFCandidate, F);
 
-    // F1->printAdjAndParents();
-    // F1->printEdgeIds();
+    // MAFCandidate->printAdjAndParents();
+    // MAFCandidate->printEdgeIds();
     // std::cout << "--\n";
-    // F2->printAdjAndParents();
-    // F2->printEdgeIds();
+    // F->printAdjAndParents();
+    // F->printEdgeIds();
 
     // MIP generation
     mip->generateVariables();
@@ -49,7 +50,7 @@ void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
     // mip->exportSolution();
 
     pruneAndRegraft(MAFCandidate);
-    // F1->printAdjAndParents();
+    // MAFCandidate->printAdjAndParents();
 }
 
 void MIPSolver::pruneAndRegraft(MIPForest* F) const {

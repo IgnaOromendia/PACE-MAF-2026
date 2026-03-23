@@ -1,4 +1,5 @@
 #include "Forest.h"
+#include <algorithm>
 
 Forest::Forest(int forestId, int nodeAmount, int labelAmount) {
     this->forestId      = forestId;
@@ -12,6 +13,8 @@ Forest::Forest(int forestId, int nodeAmount, int labelAmount) {
     this->parent.assign(nodeAmount, -1);
     this->edgeAvailable.assign(edgesAmount, true);
     this->leafsForEdge.assign(edgesAmount, std::unordered_set<std::pair<int, int>, EdgeHash>());
+    this->tin.assign(nodeAmount, 0);
+    this->tout.assign(nodeAmount, 0);
 
     this->tree.resize(nodeAmount);
     std::iota(this->tree.begin(), this->tree.end(), 0);
@@ -34,9 +37,13 @@ Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<i
     this->tree.assign(nodeAmount, 0);
     this->visited.assign(nodeAmount, 0);
     this->leafsForEdge.assign(edgesAmount, std::unordered_set<std::pair<int, int>, EdgeHash>());
+    this->tin.assign(nodeAmount, 0);
+    this->tout.assign(nodeAmount, 0);
 
     treeCount = 1;
-
+    timer = 0;
+    
+    updateComponents(labelsAmount);
     tagEdges();
     precomputeAllPaths();
 }
@@ -56,6 +63,8 @@ Forest::Forest(const Forest& other) {
     nodeToEdge      = other.nodeToEdge;
     paths           = other.paths;
     leafsForEdge    = other.leafsForEdge;
+    tin             = other.tin;
+    tout            = other.tout;
 }
 
 Forest::~Forest() {}
@@ -137,6 +146,25 @@ int Forest::sibling(int node) const {
     return -1;
 }
 
+int Forest::nextNodeInPathTo(int v, int w) const {
+    int edgeId = pathBetween(v,w).front();
+    return edgeToNode[edgeId].first == v ? edgeToNode[edgeId].second : edgeToNode[edgeId].first;
+}
+
+bool Forest::isAncestor(int v, int w) const {
+    return tin[v] <= tin[w] and tout[w] <= tout[v];
+}
+
+bool Forest::onPath(int v, int i, int j) const {
+    int l = LCA(i,j);
+    return isAncestor(l, v) and (isAncestor(v, i) or isAncestor(v, j));
+}
+
+bool Forest::nodeAvailable(int node) const {
+    if (node < labelsAmount) return true;
+    return adj[node] != std::make_pair(-1,-1);
+}
+
 int Forest::amountOfEdges() const {
     return edgesAmount;
 }
@@ -157,12 +185,24 @@ void Forest::removeEdge(int v, int u) {
 }
 
 std::vector<int> Forest::pathBetween(int v, int w) const {
-    if(not sameConnectedComponent(v,w)) return std::vector<int>();
+    if (not sameConnectedComponent(v,w)) return std::vector<int>();
     return paths.at({v,w});
 }
 
 int Forest::pathSize(int v, int w) const {
     return pathBetween(v,w).size();
+}
+
+int Forest::edgeForNode(int v, int w) const {
+    int descendant = isAncestor(v,w) ? w : v;
+    int ancestor = isAncestor(v,w) ? v : w;
+    return nodeToEdge.at({descendant, ancestor});
+}
+
+bool Forest::pathIntersection(int i, int j, int k, int l) const {
+    int l_ij = LCA(i,j);
+    int l_kl = LCA(k,l);
+    return onPath(l_ij, k, l) or onPath(l_kl, i, j);
 }
 
 void Forest::cut(int node) {
@@ -182,6 +222,7 @@ void Forest::cut(int node) {
 
     visited.assign(nodeAmount, 0);
 
+    timer = 0;
     updateComponents(node);
 }
 
@@ -248,8 +289,97 @@ void Forest::printAdjAndParents() const {
         std::cout << i << "\t(" << adj[i].first << "," << adj[i].second << ")" << "\t\t" << parent[i] << "\n";
 }
 
+void Forest::printAll() const {
+    std::cout << "Forest {\n";
+    std::cout << "  forestId: " << forestId << "\n";
+    std::cout << "  nodeAmount: " << nodeAmount << "\n";
+    std::cout << "  labelsAmount: " << labelsAmount << "\n";
+    std::cout << "  treeCount: " << treeCount << "\n";
+    std::cout << "  rootId: " << rootId << "\n";
+    std::cout << "  edgesAmount: " << edgesAmount << "\n";
+    std::cout << "  timer: " << timer << "\n";
+    std::cout << "}\n";
+
+    std::cout << "Nodes\n";
+    std::cout << "node\t(left,right)\tparent\ttree\tvisited\ttin\ttout\tleaf\n";
+    for (int i = 0; i < nodeAmount; i++) {
+        int visitedValue = i < static_cast<int>(visited.size()) ? visited[i] : -1;
+        int tinValue = i < static_cast<int>(tin.size()) ? tin[i] : -1;
+        int toutValue = i < static_cast<int>(tout.size()) ? tout[i] : -1;
+
+        std::cout << i
+                  << "\t(" << adj[i].first << "," << adj[i].second << ")"
+                  << "\t\t" << parent[i]
+                  << "\t" << tree[i]
+                  << "\t" << visitedValue
+                  << "\t" << tinValue
+                  << "\t" << toutValue
+                  << "\t" << isLeaf(i)
+                  << "\n";
+    }
+
+    std::cout << "Edges\n";
+    for (int edgeId = 0; edgeId < edgesAmount; edgeId++) {
+        std::pair<int, int> nodes = edgeId < static_cast<int>(edgeToNode.size()) ? edgeToNode[edgeId] : std::pair<int, int>{-1, -1};
+        bool available = edgeId < static_cast<int>(edgeAvailable.size()) ? edgeAvailable[edgeId] : false;
+
+        std::cout << edgeId
+                  << ": (" << nodes.first << "," << nodes.second << ")"
+                  << " available=" << available
+                  << "\n";
+    }
+
+    std::vector<std::pair<int, std::pair<int, int>>> nodeToEdgeEntries;
+    nodeToEdgeEntries.reserve(nodeToEdge.size());
+    for (const auto& [nodes, edgeId] : nodeToEdge)
+        nodeToEdgeEntries.push_back({edgeId, nodes});
+
+    std::sort(nodeToEdgeEntries.begin(), nodeToEdgeEntries.end());
+
+    std::cout << "nodeToEdge\n";
+    for (const auto& [edgeId, nodes] : nodeToEdgeEntries)
+        std::cout << "(" << nodes.first << "," << nodes.second << ") -> " << edgeId << "\n";
+
+    std::vector<std::pair<std::pair<int, int>, std::vector<int>>> sortedPaths;
+    sortedPaths.reserve(paths.size());
+    for (const auto& [nodes, path] : paths)
+        sortedPaths.push_back({nodes, path});
+
+    std::sort(
+        sortedPaths.begin(),
+        sortedPaths.end(),
+        [](const auto& a, const auto& b) {
+            return a.first < b.first;
+        }
+    );
+
+    std::cout << "Paths\n";
+    for (const auto& [nodes, path] : sortedPaths) {
+        std::cout << "(" << nodes.first << "," << nodes.second << "): [";
+        for (int i = 0; i < static_cast<int>(path.size()); i++) {
+            if (i > 0) std::cout << ",";
+            std::cout << path[i];
+        }
+        std::cout << "]\n";
+    }
+
+    std::cout << "leafsForEdge\n";
+    for (int edgeId = 0; edgeId < static_cast<int>(leafsForEdge.size()); edgeId++) {
+        std::vector<std::pair<int, int>> leafPairs(leafsForEdge[edgeId].begin(), leafsForEdge[edgeId].end());
+        std::sort(leafPairs.begin(), leafPairs.end());
+
+        std::cout << edgeId << ": [";
+        for (int i = 0; i < static_cast<int>(leafPairs.size()); i++) {
+            if (i > 0) std::cout << ",";
+            std::cout << "(" << leafPairs[i].first << "," << leafPairs[i].second << ")";
+        }
+        std::cout << "]\n";
+    }
+}
+
 void Forest::updateComponents(int v) {
     visited[v] = true;
+    tin[v] = timer++;
 
     auto[u, w] = adj[v];
 
@@ -266,6 +396,8 @@ void Forest::updateComponents(int v) {
             updateComponents(w);
         }
     }
+
+    tout[v] = timer++;
 }
 
 bool Forest::nodeInRange(int a) const {

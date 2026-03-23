@@ -20,10 +20,10 @@ struct EdgeHash {
 
 class Forest {
 protected:
-    int edgesAmount, forestId, nodeAmount, labelsAmount, treeCount, rootId;
+    int edgesAmount, forestId, nodeAmount, labelsAmount, treeCount, rootId, timer;
 
     std::vector<std::pair<int, int> > adj;
-    std::vector<int> parent, tree, visited;
+    std::vector<int> parent, tree, visited, tin, tout;
     std::vector<bool> edgeAvailable;
     std::vector<std::pair<int, int>> edgeToNode;
     std::unordered_map<std::pair<int,int>, int, EdgeHash> nodeToEdge;
@@ -61,6 +61,10 @@ public:
     int parentOf(int node) const;
     void removeNodeFromAdj(int node);
     int sibling(int node) const;
+    int nextNodeInPathTo(int v, int w) const;
+    bool isAncestor(int v, int w) const;
+    bool onPath(int v, int i, int j) const;
+    bool nodeAvailable(int node) const;
 
     // Edges
     int amountOfEdges() const;
@@ -69,6 +73,8 @@ public:
     void removeEdge(int v, int u);
     std::vector<int> pathBetween(int v, int w) const;
     int pathSize(int v, int w) const;
+    int edgeForNode(int v, int w) const;
+    bool pathIntersection(int i, int j, int k, int l) const;
     
     // Forest Operations
     void cut(int node);
@@ -80,6 +86,7 @@ public:
 
     // Debug
     void printAdjAndParents() const;
+    void printAll() const;
         
 };
 

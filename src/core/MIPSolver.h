@@ -2,6 +2,7 @@
 #define MIPSOLVER_H
 
 #include "../model/PathMIPModel.h"
+#include "../model/PairMIPModel.h"
 #include "../service/Instance.h"
 
 class MIPSolver {

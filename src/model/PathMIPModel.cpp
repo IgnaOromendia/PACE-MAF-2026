@@ -1,25 +1,5 @@
 #include "PathMIPModel.h"
 
-void PathMIPModel::initializeMVariableFor(MIPForest *F) {
-    M[F->modId()] = IloArray<IloIntVarArray>(env, F->amountOfNodes());
-
-    std::string name = "M_" + std::to_string(F->modId());
-
-    for(int i = 0; i < F->amountOfNodes(); i++) {
-        M[F->modId()][i] = IloIntVarArray(env, F->amountOfNodes(), 0, 1);
-
-        name += "_" + std::to_string(i);
-
-        for(int j = i+1; j < F->amountOfNodes(); j++) {
-            name += "_" + std::to_string(j);
-            
-            M[F->modId()][i][j].setName(name.c_str());
-        }
-
-        model.add(M[F->modId()][i]);
-    }    
-}
-
 void PathMIPModel::setPathConstraintsFor(MIPForest* A, MIPForest* B) {
     for(int v = 0; v < A->labelAmount(); v++) {
         for(int w = v + 1; w < A->labelAmount(); w++) {
@@ -39,17 +19,6 @@ void PathMIPModel::setPathConstraintsFor(MIPForest* A, MIPForest* B) {
             expr.end();
         }
     }
-}
-
-PathMIPModel::~PathMIPModel() {
-    if (M.getImpl()) M.end();
-}
-
-void PathMIPModel::generateVariables() {
-    MIPModel::generateVariables();
-    M = IloArray<IloArray<IloIntVarArray>>(env, 2);
-    initializeMVariableFor(F1);
-    initializeMVariableFor(F2);
 }
 
 void PathMIPModel::setConstraints() {

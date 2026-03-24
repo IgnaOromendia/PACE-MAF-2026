@@ -40,6 +40,7 @@ std::pair<int,int> MIPForest::low(const Triple& t) const {
 }
 
 void MIPForest::conflictiveTriples(const MIPForest* F, std::vector<Triple>& conflictive) const {
+    conflictive.clear();
     for(int v = 0; v < labelAmount(); v++) {
         for(int w = v + 1; w < labelAmount(); w++) {
             if (not sameConnectedComponent(v,w)) continue;

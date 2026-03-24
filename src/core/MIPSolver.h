@@ -4,6 +4,7 @@
 #include "../model/PathMIPModel.h"
 #include "../model/PairMIPModel.h"
 #include "../service/Instance.h"
+#include "GreedySolver.h"
 
 class MIPSolver {
 private:
@@ -15,9 +16,6 @@ private:
 
     void solveFor(MIPForest* F1, MIPForest* F2);
     void pruneAndRegraft(MIPForest* F) const;
-
-    // Primal
-    void computeConflictiveEdges(MIPForest* F1, MIPForest* F2, std::unordered_set<int>& edgesF1, std::unordered_set<int>& edgesF2) const;
 
 public:
     MIPSolver();

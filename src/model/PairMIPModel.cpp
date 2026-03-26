@@ -1,14 +1,5 @@
 #include "PairMIPModel.h"
 
-PairMIPModel::PairMIPModel(): MIPModel() {
-}
-
-PairMIPModel::PairMIPModel(MIPForest *F1, MIPForest *F2): MIPModel(F1, F2) {
-    forestNodeAmount.assign(2,0);
-    forestNodeAmount[0] = F1->amountOfNodes();
-    forestNodeAmount[1] = F2->amountOfNodes();
-}
-
 PairMIPModel::~PairMIPModel() {
     if (M.getImpl()) M.end();
 }
@@ -104,20 +95,9 @@ void PairMIPModel::setConflictiveTripleConstraint() {
             for(int k = j + 1; k < F1->labelAmount(); k++) {
                 if (not F1->isConflictive(Triple(i,j,k), F2)) continue;
 
-                IloExpr expr(env);
-                std::string name = "Tri_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k);
-
                 auto [l1, l2] = F1->low(Triple(i,j,k));
-
                 int v = i == l1 or i == l2 ? (j == l1 or j == l2 ? k : j) : i;
-
-                auto [a1, b1] = std::minmax(v, l1);
-                auto [a2, b2] = std::minmax(v, l2);
-
-                expr = M[F1->modId()][a1][b1] + M[F1->modId()][a2][b2];
-
-                addConstraint(-IloInfinity, expr, 1, name);
-                expr.end();
+                addConflictiveTripleConstraint(v, l1, l2);
             }
         }
     }
@@ -166,21 +146,32 @@ void PairMIPModel::setIncompatiblePaths() {
 }
 
 void PairMIPModel::addPermutationIncPath(int a, int b, int c, int d) {
-    if (not F1->pathIntersection(a,b,c,d) and F2->pathIntersection(a,b,c,d)) {
-        IloExpr expr(env);
-        std::string name = "Inc_" + std::to_string(a) + "_" + std::to_string(b) + "_" + std::to_string(c) + "_" + std::to_string(d);
-        expr = M[0][a][b] + M[0][c][d];
-        addConstraint(-IloInfinity, expr, 1, name);
-        expr.end();
-    }
+    if (not F1->pathIntersection(a,b,c,d) and F2->pathIntersection(a,b,c,d)) 
+        addIncompatiblePathConstraint(F1->modId(), a, b, c, d);
+    
+    if (F1->pathIntersection(a,b,c,d) and not F2->pathIntersection(a,b,c,d)) 
+        addIncompatiblePathConstraint(F2->modId(), a, b, c, d);
+}
 
-    if (F1->pathIntersection(a,b,c,d) and not F2->pathIntersection(a,b,c,d)) {
-        IloExpr expr(env);
-        std::string name = "Inc_" + std::to_string(a) + "_" + std::to_string(b) + "_" + std::to_string(c) + "_" + std::to_string(d);
-        expr = M[1][a][b] + M[1][c][d];
-        addConstraint(-IloInfinity, expr, 1, name);
-        expr.end();
-    }
+void PairMIPModel::addConflictiveTripleConstraint(int i, int j, int k) {
+    IloExpr expr(env);
+    std::string name = "Tri_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k);
+
+    auto [a1, b1] = std::minmax(i, j);
+    auto [a2, b2] = std::minmax(i, k);
+
+    expr = M[F1->modId()][a1][b1] + M[F1->modId()][a2][b2];
+
+    addConstraint(-IloInfinity, expr, 1, name);
+    expr.end();
+}
+
+void PairMIPModel::addIncompatiblePathConstraint(int t, int i, int j, int k, int l) {
+    IloExpr expr(env);
+    std::string name = "Inc_" + std::to_string(i) + "_" + std::to_string(j) + "_" + std::to_string(k) + "_" + std::to_string(l);
+    expr = M[t][i][j] + M[t][k][l];
+    addConstraint(-IloInfinity, expr, 1, name);
+    expr.end();
 }
 
 void PairMIPModel::generateVariables() {
@@ -212,6 +203,22 @@ void PairMIPModel::setConstraints() {
     // setKnownCutsConstraints();
 }
 
+void PairMIPModel::setBasicConstraints() {
+    setReflexiveConstriantFor(F1);
+    setReflexiveConstriantFor(F2);
+
+    setConnectivtyFor(F1);
+    setConnectivtyFor(F2);
+
+    setCutPropagationFor(F1);
+    setCutPropagationFor(F2);
+
+    setCutConsistencyFor(F1);
+    setCutConsistencyFor(F2);
+
+    setConflictiveTripleConstraint();
+}
+
 void PairMIPModel::setObjective() {
     IloExpr obj(env);
 
@@ -220,4 +227,76 @@ void PairMIPModel::setObjective() {
     
     model.add(IloMinimize(env, obj));
     obj.end();
+}
+
+void PairMIPModel::solve(bool exportModel) {
+    while (true) {
+        cplexSolve(exportModel);
+        // mip->exportSolution();
+
+        if (isInfeasible()) {
+            std::cerr << "Infeasible\n";
+            break;
+        }
+
+        // const auto start = std::chrono::steady_clock::now();
+        if (searchForIncompatiblePaths(F1, F2)) {
+            // const auto end = std::chrono::steady_clock::now();
+            // const std::chrono::duration<double> elapsed = end - start;
+            // std::cerr << "lazy triples time: " << elapsed.count() << "\n"; 
+            continue;
+        }
+        
+        break;
+    }    
+}
+
+bool PairMIPModel::searchForIncompatiblePaths(MIPForest* A, MIPForest* B) {
+    int L = A->labelAmount();
+    std::vector<Path> violatedPaths;
+    violatedPaths.reserve(constriantBound);
+
+    // std::cout << constraintAddAmount << "\n";
+
+    for(int i = 0; i < L and violatedPaths.size() < constriantBound; i++) {
+        for(int j = i+1; j < L and violatedPaths.size() < constriantBound; j++) {
+            if (not A->sameConnectedComponent(i,j)) continue;
+            for(int k = j+1; k < L and violatedPaths.size() < constriantBound; k++) {
+                if (not A->sameConnectedComponent(i,k)) continue;
+                for(int l = k+1; l < L and violatedPaths.size() < constriantBound; l++) {
+                    if (not A->sameConnectedComponent(k,l)) continue;
+
+                    if (not F1->pathIntersection(i,j,k,l) and F2->pathIntersection(i,j,k,l)) {
+                        int constraintValue = getValueFor(A->modId(), i, j) + getValueFor(A->modId(), k, l);
+                        if (constraintValue > 1) 
+                            violatedPaths.emplace_back(A->modId(), i, j, k, l);
+                    }
+                    
+                    if (F1->pathIntersection(i,j,k,l) and not F2->pathIntersection(i,j,k,l)) {
+                        int constraintValue = getValueFor(B->modId(), i, j) + getValueFor(B->modId(), k, l);
+                        if (constraintValue > 1) 
+                            violatedPaths.emplace_back(B->modId(), i, j, k, l);
+                    }
+                    
+                }
+            }
+        }
+    }
+
+    constriantBound *= 3; 
+
+    for (const Path& p : violatedPaths)
+        addIncompatiblePathConstraint(p.tree, p.i, p.j, p.k, p.l);
+
+    return not violatedPaths.empty();
+}
+
+int PairMIPModel::getValueFor(int forestId, int i, int j) const {
+    try {
+        const double value = solver.getValue(M[forestId][std::min(i,j)][std::max(i,j)]);
+        return value >= 0.5 ? 1 : 0;
+    } catch (const IloException& e) {
+        std::cerr << "CPLEX exception in getMValueFor(" << forestId << ", " << std::min(i,j) << ", " << std::max(i,j) << "): " << e << "\n";
+        throw;
+    }
 }

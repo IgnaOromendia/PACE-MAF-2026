@@ -1,5 +1,6 @@
 #include "MIPSolver.h"
 
+#include <algorithm>
 #include <iomanip>
 
 MIPSolver::MIPSolver() {}
@@ -28,42 +29,20 @@ void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
     // mip = std::make_unique<PathMIPModel>(MAFCandidate, F);
     mip = std::make_unique<PairMIPModel>(MAFCandidate, F);
 
-    // MAFCandidate->printAdjAndParents();
-    // MAFCandidate->printEdgeIds();
-    // std::cout << "--\n";
-    // F->printAdjAndParents();
-    // F->printEdgeIds();
+    // GreedySolver greedy = GreedySolver(MAFCandidate, F);
+    // std::unordered_set<int> edgesF1 = greedy.edgesToCutF1(), edgesF2 = greedy.edgesToCutF2();
 
     // MIP generation
     mip->generateVariables();
-
-    GreedySolver greedy = GreedySolver(MAFCandidate, F);
-
-    std::unordered_set<int> edgesF1 = greedy.edgesToCutF1(), edgesF2 = greedy.edgesToCutF2();
-
-    mip->addPrimalHeuristic(edgesF1, edgesF2);
-
+    // mip->addPrimalHeuristic(edgesF1, edgesF2);
     mip->setConstraints();
     mip->setObjective();
-    
+
     // Solve
     mip->solve();
-    // mip->exportSolution();
+
 
     pruneAndRegraft(MAFCandidate);
-    // MAFCandidate->printAdjAndParents();
-
-    int hit = 0;
-    for (int e: edgesF1) 
-        hit += mip->getValueFor(0, e);
-
-    std::cerr << "F1: " << hit << " / " << edgesF1.size() << "\n";
-    
-    hit = 0;
-    for (int e: edgesF2) 
-        hit += mip->getValueFor(1, e);
-
-    std::cerr << "F2: " << hit << " / " << edgesF2.size() << "\n";
 }
 
 void MIPSolver::pruneAndRegraft(MIPForest* F) const {

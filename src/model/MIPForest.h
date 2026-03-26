@@ -31,6 +31,7 @@ public:
     std::pair<int,int> low(const Triple& t) const;
     void conflictiveTriples(const MIPForest* F, std::vector<Triple>& conflictive) const;
     bool isConflictive(const Triple& t, const MIPForest* F) const;
+    int amountOfTriples() const;
     
 };
 

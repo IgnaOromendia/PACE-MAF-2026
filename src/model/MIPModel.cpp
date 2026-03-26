@@ -15,6 +15,7 @@ MIPModel::MIPModel(MIPForest *F1, MIPForest *F2) {
     // PARAMS
     solver.setOut(env.getNullStream());
     solver.setParam(IloCplex::Param::Threads, 1);
+    solver.setParam(IloCplex::Param::Emphasis::MIP, IloCplex::MIPEmphasisFeasibility);
     // solver.setParam(IloCplex::Param::TimeLimit, 30.0);
 }
 
@@ -33,19 +34,22 @@ void MIPModel::generateVariables() {
     initializeDVariableFor(F2);
 }
 
-
-void MIPModel::solve(bool exportModel) {
-    solver.extract(model);
-    // solver.addMIPStart(primalHeuristicVars, primalHeuristicVals);
-    if (exportModel) {
-        equationsFile += std::to_string(F1->id()) + "_" + std::to_string(F2->id()) + ".lp";
-        solver.exportModel(equationsFile.c_str());
-    }
+void MIPModel::cplexSolve(bool exportModel) {
     try {
+        solver.extract(model);
+        if (primalHeuristicVars.getSize() > 0) solver.addMIPStart(primalHeuristicVars, primalHeuristicVals);
+        if (exportModel) {
+            std::string name = equationsFile + std::to_string(F1->id()) + "_" + std::to_string(F2->id()) + "_run_" + std::to_string(run) + ".lp";
+            solver.exportModel(name.c_str());
+        }
+
+        run++;
+
         const auto start = std::chrono::steady_clock::now();
         bool ok = solver.solve();
         const auto end = std::chrono::steady_clock::now();
         const std::chrono::duration<double> elapsed = end - start;
+        
         std::cerr << "solve=" << ok
                   << " status=" << solver.getStatus()
                   << " solverTime=" << elapsed.count() << "s\n";
@@ -79,6 +83,17 @@ int MIPModel::getValueFor(int forestId, int edgeId) const {
     }
 }
 
+int MIPModel::getValueFor(int forestId, int i, int j) const {
+    int edgeId = forestId % 2 == 0 ? F1->edgeForNode(i,j) : F2->edgeForNode(i,j);
+    try {
+        const double value = solver.getValue(D[forestId][edgeId]);
+        return value >= 0.5 ? 1 : 0;
+    } catch (const IloException& e) {
+        std::cerr << "CPLEX exception in getValueFor(" << forestId << ", " << edgeId << "): " << e << "\n";
+        throw;
+    }
+}
+
 void MIPModel::exportSolution() const {
     for(MIPForest* F : {F1, F2}) {
         std::cout << "F" << F->id() << std::endl;
@@ -87,6 +102,10 @@ void MIPModel::exportSolution() const {
             std::cout << e << ": " << value << std::endl;
         }
     }
+}
+
+bool MIPModel::isInfeasible() const {
+    return solver.getStatus() == 3;
 }
 
 void MIPModel::initializeDVariableFor(MIPForest* F) {

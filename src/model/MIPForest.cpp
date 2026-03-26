@@ -58,3 +58,8 @@ bool MIPForest::isConflictive(const Triple &t, const MIPForest *F) const {
     if (not sameConnectedComponent(t.i, t.j) or not sameConnectedComponent(t.i, t.k) or not sameConnectedComponent(t.j, t.k)) return false;
     return low(t) != F->low(t);
 }
+
+int MIPForest::amountOfTriples() const {
+    int n = labelsAmount;
+    return n * (n-1) * (n-2) / 6;
+}

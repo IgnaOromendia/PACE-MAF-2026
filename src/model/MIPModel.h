@@ -15,6 +15,7 @@ protected:
     // Instance
     MIPForest* F1;
     MIPForest* F2;
+    int run = 0;
 
     // Variables
     IloArray<IloIntVarArray> D;
@@ -47,11 +48,15 @@ public:
     virtual void generateVariables();
     virtual void setConstraints() = 0;
     virtual void setObjective() = 0;
-    
-    void solve(bool exportModel = false);
+    virtual void solve(bool exportModel = false) { cplexSolve(exportModel); };
+
+    void cplexSolve(bool exportModel = false);
+
     void addPrimalHeuristic(const std::unordered_set<int>& edgesF1, const std::unordered_set<int>& edgesF2);
     int getValueFor(int forestId, int edgeId) const;
+    virtual int getValueFor(int forestId, int i, int j) const;
     void exportSolution() const;
+    bool isInfeasible() const;
 };
 
 

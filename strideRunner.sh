@@ -15,6 +15,7 @@ if [ ! -f "$list_path" ]; then
     exit 1
 fi
 
+make clean all
 ./stride download -i "$list_path"
 ./stride run -s ./paceSolver -i "$list_path"
 python3 process_latest_summary.py

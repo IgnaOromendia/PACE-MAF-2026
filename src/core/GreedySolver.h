@@ -1,7 +1,7 @@
 #ifndef GREEDYSOLVER_H
 #define GREEDYSOLVER_H
 
-#include "../model/MIPForest.h"
+#include "../model/forest/MIPForest.h"
 
 class GreedySolver {
 private:

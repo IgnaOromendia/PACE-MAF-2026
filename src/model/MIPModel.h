@@ -3,7 +3,7 @@
 
 #include <ilcplex/ilocplex.h>
 #include <memory>
-#include "../model/MIPForest.h"
+#include "../model/forest/MIPForest.h"
 #include <unordered_set>
 #include <chrono>
 

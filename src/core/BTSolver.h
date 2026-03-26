@@ -1,7 +1,7 @@
 #ifndef BTSOLVER_H
 #define BTSOLVER_H
 
-#include "../model/BTForest.h"
+#include "../model/forest/BTForest.h"
 #include "../service/Instance.h"
 
 class BTSolver {

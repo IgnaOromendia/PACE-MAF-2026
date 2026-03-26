@@ -3,7 +3,7 @@
 
 #include <cctype>
 #include <string>
-#include "../model/Forest.h"
+#include "../model/forest/Forest.h"
 
 class NewickParser{
 private:

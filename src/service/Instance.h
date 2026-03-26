@@ -7,8 +7,8 @@
 #include <sstream>
 #include <vector>
 
-#include "../model/BTForest.h"
-#include "../model/MIPForest.h"
+#include "../model/forest/BTForest.h"
+#include "../model/forest/MIPForest.h"
 #include "NewickParser.h"
 
 class Instance {

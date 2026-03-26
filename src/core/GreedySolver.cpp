@@ -1,8 +1,5 @@
 #include "GreedySolver.h"
 
-#include <iostream>
-
-
 GreedySolver::GreedySolver(MIPForest *A, MIPForest *B) {
     F1 = new MIPForest(*A);
     F2 = new MIPForest(*B);
@@ -14,7 +11,7 @@ GreedySolver::~GreedySolver() {
     delete F2;
 }
 
-std::pair<int,int> GreedySolver::maxFreqEdgeOn(MIPForest* F, std::vector<Triple>& conflictive) const {
+std::pair<int,int> GreedySolver::maxFreqEdgeOn(MIPForest* F, std::unordered_set<Triple, TripleHash>& conflictive) const {
     std::vector<int> freq(F->amountOfEdges(), 0);
 
     for(const Triple& t: conflictive) {
@@ -45,7 +42,7 @@ void GreedySolver::addAndCutEdge(int edgeId, MIPForest *F, std::unordered_set<in
 }
 
 void GreedySolver::solve() {
-    std::vector<Triple> conflictive;
+    std::unordered_set<Triple, TripleHash> conflictive;
     
     F1->conflictiveTriples(F2, conflictive);
 

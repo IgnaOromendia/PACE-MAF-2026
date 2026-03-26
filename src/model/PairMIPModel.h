@@ -23,8 +23,8 @@ private:
     
     // Constraint Helpers
     void addPermutationIncPath(int a, int b, int c, int d);
-    void addConflictiveTripleConstraint(int i, int j, int k);
-    void addIncompatiblePathConstraint(int t, int i, int j, int k, int l);
+    void addConflictiveTripleConstraint(const Triple& t);
+    void addIncompatiblePathConstraint(const Path& p);
     
 public:
     PairMIPModel(): LazyMIPModel() {};
@@ -35,16 +35,19 @@ public:
     PairMIPModel(PairMIPModel&&) = delete;
     PairMIPModel& operator=(PairMIPModel&&) = delete;
 
+    int getValueFor(int forestId, int i, int j) const override;
+    IloIntVar getVarFor(int forestId, int i, int j) const;
+
     void generateVariables() override;
     void setConstraints() override;
-    void setBasicConstraints() override;
     void setObjective() override;
     void solve(bool exportModel = false) override;
 
     // Lazy
-    bool searchForIncompatiblePaths(MIPForest* A, MIPForest* B) override;
+    bool searchForConflictiveTriples(const LazyCallbackI& callback, std::vector<Triple>& constraintToAdd) override;
+    bool searchForIncompatiblePaths(const LazyCallbackI& callback, std::vector<Path>& constraintToAdd) override;
+    int getCallbackValueFor(const LazyCallbackI& callback, int forestId, int i, int j) const override;
     
-    int getValueFor(int forestId, int i, int j) const override;
 };
 
 

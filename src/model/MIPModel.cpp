@@ -6,6 +6,9 @@ MIPModel::MIPModel(MIPForest *F1, MIPForest *F2) {
 
     // pruneSiblings();
 
+    F1->conflictiveTriples(F2, conflictiveTriples);
+    F1->incompatiblePaths(F2, incompatiblePaths);
+
     model = IloModel(env);
     solver = IloCplex(env);
 

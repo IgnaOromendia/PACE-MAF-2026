@@ -16,6 +16,8 @@ protected:
     MIPForest* F1;
     MIPForest* F2;
     int run = 0;
+    std::unordered_set<Triple, TripleHash> conflictiveTriples;
+    std::unordered_set<Path, PathHash> incompatiblePaths;
 
     // Variables
     IloArray<IloIntVarArray> D;

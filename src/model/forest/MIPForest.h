@@ -22,8 +22,8 @@ struct TripleHash {
 };
 
 struct Path {
-    int tree,i,j,k,l;
-    Path(int tree, int i, int j, int k, int l): tree(tree), i(i), j(j), k(k), l(l) {}
+    int tree, i, j, k, l, score;
+    Path(int tree, int i, int j, int k, int l, int score): tree(tree), i(i), j(j), k(k), l(l), score(score) {}
 
     bool operator==(const Path& other) const {
         return tree == other.tree and i == other.i and j == other.j and

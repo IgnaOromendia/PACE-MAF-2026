@@ -34,16 +34,29 @@ Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<i
     this->parent = parents;
 
     this->edgeAvailable.assign(edgesAmount, true);
-    this->tree.assign(nodeAmount, 0);
+    this->tree.assign(nodeAmount, -1);
     this->visited.assign(nodeAmount, 0);
     this->leafsForEdge.assign(edgesAmount, std::unordered_set<std::pair<int, int>, EdgeHash>());
     this->tin.assign(nodeAmount, 0);
     this->tout.assign(nodeAmount, 0);
 
-    treeCount = 1;
+    treeCount = 0;
     timer = 0;
     
-    updateComponents(labelsAmount);
+    for(int v = labelsAmount; v < nodeAmount; v++) { 
+        if (nodeAvailable(v) and not visited[v]) {
+            tree[v] = treeCount++;
+            updateComponents(v);
+        }       
+    }
+
+    for(int v = 0; v < labelsAmount; v++) { 
+        if (nodeAvailable(v) and not visited[v]) {
+            tree[v] = treeCount++;
+            updateComponents(v);
+        }       
+    }
+    
     tagEdges();
     precomputeAllPaths();
 }
@@ -193,6 +206,13 @@ int Forest::pathSize(int v, int w) const {
     return pathBetween(v,w).size();
 }
 
+int Forest::pathScore(int v, int w) const {
+    int sum = 0;
+    for(int e: pathBetween(v,w)) 
+        sum += edgeScore(e);
+    return sum;
+}
+
 int Forest::edgeForNode(int v, int w) const {
     int descendant = isAncestor(v,w) ? w : v;
     int ancestor = isAncestor(v,w) ? v : w;
@@ -203,6 +223,10 @@ bool Forest::pathIntersection(int i, int j, int k, int l) const {
     int l_ij = LCA(i,j);
     int l_kl = LCA(k,l);
     return onPath(l_ij, k, l) or onPath(l_kl, i, j);
+}
+
+int Forest::edgeScore(int e) const {
+    return leafsForEdge[e].size();
 }
 
 void Forest::cut(int node) {

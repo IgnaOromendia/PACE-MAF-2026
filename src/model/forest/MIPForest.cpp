@@ -89,9 +89,9 @@ void MIPForest::incompatiblePaths(const MIPForest *F, std::unordered_set<Path, P
 
 void MIPForest::addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible) const {
     if (not pathIntersection(a,b,c,d) and F->pathIntersection(a,b,c,d)) 
-        incompatible.insert(Path(modId(),a, b, c, d));
+        incompatible.insert(Path(modId(),a, b, c, d, pathScore(a,b) + pathScore(c,d)));
         
     
     if (pathIntersection(a,b,c,d) and not F->pathIntersection(a,b,c,d)) 
-        incompatible.insert(Path(F->modId(),a, b, c, d));
+        incompatible.insert(Path(F->modId(),a, b, c, d, F->pathScore(a,b) + F->pathScore(c,d)));
 }

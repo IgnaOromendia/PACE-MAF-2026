@@ -1,5 +1,6 @@
 #include "PairMIPModel.h"
-#include "LazyCallbackI.hpp"
+#include "cuts/LazyCallbackI.hpp"
+#include "cuts/UserCutCallback.hpp"
 
 PairMIPModel::~PairMIPModel() {
     if (M.getImpl()) M.end();
@@ -95,33 +96,47 @@ void PairMIPModel::setConflictiveTripleConstraint() {
 }
 
 void PairMIPModel::setKnownCutsConstraints() {
-    for(int i = 0; i < F1->amountOfNodes(); i++) {
-        if (not F1->nodeAvailable(i)) continue;
-        for(int j = i+1; j < F1->amountOfNodes(); j++) {
-            if (not F1->sameConnectedComponent(i,j) or not F1->nodeAvailable(j)) continue;
+    for(int i = 0; i < F1->labelAmount(); i++) {
+        for(int j = i+1; j < F1->labelAmount(); j++) {
+            if (F1->sameConnectedComponent(i,j)) continue;
 
-            IloExpr expr1(env);
+            // IloExpr expr1(env);
             IloExpr expr2(env);
             
-            std::string name1 = "Disc_0" + std::to_string(i) + "_" + std::to_string(j);
+            // std::string name1 = "Disc_0" + std::to_string(i) + "_" + std::to_string(j);
             std::string name2 = "Disc_1" + std::to_string(i) + "_" + std::to_string(j);
 
-            expr1 = M[F1->modId()][i][j];
+            // expr1 = M[F1->modId()][i][j];
             expr2 = M[F2->modId()][i][j];
 
-            addConstraint(0, expr1, 0, name1);
+            // addConstraint(0, expr1, 0, name1);
             addConstraint(0, expr2, 0, name2);
 
-            expr1.end();
+            // expr1.end();
             expr2.end();
         }
     }
 }
 
-void PairMIPModel::setIncompatiblePaths() {
+void PairMIPModel::setIncompatiblePathsConstraints() {
     for(const Path& p: incompatiblePaths) 
         addIncompatiblePathConstraint(p);
     
+}
+
+void PairMIPModel::setAgreementPathLeafConstraint() {
+    for(int i = 0; i < F1->labelAmount(); i++) {
+        for(int j = i + 1; j < F1->labelAmount(); j++) {
+            if (not F1->sameConnectedComponent(i,j)) continue;
+            IloExpr expr(env);
+            std::string name = "SamePath_" + std::to_string(i) + "_" + std::to_string(j);
+
+            expr = M[F1->modId()][i][j] - M[F2->modId()][i][j];
+
+            addConstraint(0, expr, 0, name);
+            expr.end();
+        }
+    }
 }
 
 void PairMIPModel::addConflictiveTripleConstraint(const Triple& t) {
@@ -181,9 +196,13 @@ void PairMIPModel::setConstraints() {
     setCutConsistencyFor(F1);
     setCutConsistencyFor(F2);
 
-    // setConflictiveTripleConstraint();
+    setAgreementPathLeafConstraint();
 
-    // setIncompatiblePaths();
+    setConflictiveTripleConstraint();
+
+    // setIncompatiblePathsConstraints();
+
+    setKnownCutsConstraints();
 }
 
 void PairMIPModel::setObjective() {
@@ -197,8 +216,32 @@ void PairMIPModel::setObjective() {
 }
 
 void PairMIPModel::solve(bool exportModel) {
-    solver.use(LazyCallback(env, this));
+    // solver.use(LazyCallback(env, this));
+    solver.use(new (env) UserCutCallback(env, this));
     cplexSolve(exportModel);
+}
+
+void PairMIPModel::searchForFractionalIncompatiblePaths(UserCutCallback* callback, std::vector<Path> &constraintToAdd, int maxCuts, double eps) {
+    constraintToAdd.reserve(maxCuts);
+
+    for(auto it = incompatiblePaths.begin(); it != incompatiblePaths.end() and constraintToAdd.size() < maxCuts;) {
+        if (constraintToAdd.size() == pathsBound) break;
+
+        double lhs = getCallbackDoubleValueFor(callback, (*it).tree, (*it).i, (*it).j) + getCallbackDoubleValueFor(callback, (*it).tree, (*it).k, (*it).l);
+
+        if (lhs <= 1 + eps) {
+            it++;
+            continue;
+        }
+
+        constraintToAdd.push_back(*it);
+        it = incompatiblePaths.erase(it);
+    }
+    
+}
+
+double PairMIPModel::getCallbackDoubleValueFor(UserCutCallback* callback, int forestId, int i, int j) const {
+    return callback->getValue(M[forestId][std::min(i,j)][std::max(i,j)]);;
 }
 
 bool PairMIPModel::searchForConflictiveTriples(const LazyCallbackI& callback, std::vector<Triple>& constraintToAdd) {    
@@ -217,9 +260,6 @@ bool PairMIPModel::searchForConflictiveTriples(const LazyCallbackI& callback, st
         constraintToAdd.push_back(*it);
         it = conflictiveTriples.erase(it);
     }
-
-    // std::cerr << "triple bound: " << triplesBound << " constraints\n";
-    // std::cerr << "triple added " << constraintToAdd.size() << " constraints\n";
 
     if (constraintToAdd.size() >= size_t(triplesBound * 0.8)) triplesBound *= 3;     
 
@@ -244,9 +284,6 @@ bool PairMIPModel::searchForIncompatiblePaths(const LazyCallbackI& callback, std
     }
 
     if (constraintToAdd.size() >= size_t(pathsBound * 0.8)) pathsBound *= 3; 
-
-    // std::cerr << "path bound: " << pathsBound << " constraints\n";
-    // std::cerr << "path added " << constraintToAdd.size() << " constraints\n";
 
     return not constraintToAdd.empty();
 }

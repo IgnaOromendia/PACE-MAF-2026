@@ -3,6 +3,8 @@
 
 #include "LazyMIPModel.h"
 
+class UserCutCallback;
+
 class PairMIPModel: public LazyMIPModel {
 private:
 
@@ -19,10 +21,10 @@ private:
     void setCutConsistencyFor(MIPForest* F);
     void setConflictiveTripleConstraint();
     void setKnownCutsConstraints();
-    void setIncompatiblePaths();
+    void setIncompatiblePathsConstraints();
+    void setAgreementPathLeafConstraint();
     
     // Constraint Helpers
-    void addPermutationIncPath(int a, int b, int c, int d);
     void addConflictiveTripleConstraint(const Triple& t);
     void addIncompatiblePathConstraint(const Path& p);
     
@@ -42,6 +44,9 @@ public:
     void setConstraints() override;
     void setObjective() override;
     void solve(bool exportModel = false) override;
+
+    void searchForFractionalIncompatiblePaths(UserCutCallback* callback, std::vector<Path>& constraintToAdd, int maxCuts, double eps);
+    double getCallbackDoubleValueFor(UserCutCallback* callback, int forestId, int i, int j) const;
 
     // Lazy
     bool searchForConflictiveTriples(const LazyCallbackI& callback, std::vector<Triple>& constraintToAdd) override;

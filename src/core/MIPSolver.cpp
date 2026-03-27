@@ -29,6 +29,12 @@ void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
     // mip = std::make_unique<PathMIPModel>(MAFCandidate, F);
     mip = std::make_unique<PairMIPModel>(MAFCandidate, F);
 
+    // MAFCandidate->printAdjAndParents();
+    // MAFCandidate->printEdgeIds();
+    // std::cout << "----\n";
+    // F->printAdjAndParents();
+    // F->printEdgeIds(); 
+
     // GreedySolver greedy = GreedySolver(MAFCandidate, F);
     // std::unordered_set<int> edgesF1 = greedy.edgesToCutF1(), edgesF2 = greedy.edgesToCutF2();
 
@@ -40,6 +46,7 @@ void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
 
     // Solve
     mip->solve();
+    // mip->exportSolution();
 
 
     pruneAndRegraft(MAFCandidate);

@@ -200,7 +200,7 @@ void PairMIPModel::setConstraints() {
 
     setConflictiveTripleConstraint();
 
-    // setIncompatiblePathsConstraints();
+    setIncompatiblePathsConstraints();
 
     setKnownCutsConstraints();
 }
@@ -217,14 +217,14 @@ void PairMIPModel::setObjective() {
 
 void PairMIPModel::solve(bool exportModel) {
     // solver.use(LazyCallback(env, this));
-    solver.use(new (env) UserCutCallback(env, this));
+    // solver.use(new (env) UserCutCallback(env, this));
     cplexSolve(exportModel);
 }
 
 void PairMIPModel::searchForFractionalIncompatiblePaths(UserCutCallback* callback, std::vector<Path> &constraintToAdd, int maxCuts, double eps) {
     constraintToAdd.reserve(maxCuts);
 
-    for(auto it = incompatiblePaths.begin(); it != incompatiblePaths.end() and constraintToAdd.size() < maxCuts;) {
+    for(auto it = incompatiblePaths.begin(); it != incompatiblePaths.end() and constraintToAdd.size() < size_t(maxCuts);) {
         if (constraintToAdd.size() == pathsBound) break;
 
         double lhs = getCallbackDoubleValueFor(callback, (*it).tree, (*it).i, (*it).j) + getCallbackDoubleValueFor(callback, (*it).tree, (*it).k, (*it).l);

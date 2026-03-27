@@ -8,7 +8,7 @@ CPPFLAGS := -Isrc -Isrc/core -Isrc/model -Isrc/solver
 CXXFLAGS := -std=c++17 -Wall -Wextra -pedantic
 LDLIBS := -lilocplex -lconcert -lcplex -lm -lpthread
 
-SRC := $(wildcard src/*.cpp src/core/*.cpp src/model/*.cpp src/service/*.cpp)
+SRC := $(sort $(shell find src -type f -name '*.cpp'))
 
 CPLEX_STUDIO_DIR ?= /Applications/CPLEX_Studio2211
 CPLEX_ARCH ?= arm64_osx

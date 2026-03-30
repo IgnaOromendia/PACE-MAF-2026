@@ -77,10 +77,6 @@ public:
     int edgeForNode(int v, int w) const;
     bool pathIntersection(int i, int j, int k, int l) const;
     int edgeScore(int e) const;
-    
-    // Forest Operations
-    void cut(int node);
-    void regraft();
 
     // Root
     int root() const;

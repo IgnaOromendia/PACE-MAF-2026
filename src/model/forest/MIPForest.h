@@ -67,6 +67,9 @@ public:
     // Paths
     void incompatiblePaths(const MIPForest* F, std::unordered_set<Path, PathHash>& incompatible) const;
     
+    // Forest Operations
+    void cut(int node);
+    void regraft();
 };
 
 #endif

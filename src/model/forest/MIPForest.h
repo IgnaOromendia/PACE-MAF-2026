@@ -22,8 +22,8 @@ struct TripleHash {
 };
 
 struct Path {
-    int tree, i, j, k, l, score;
-    Path(int tree, int i, int j, int k, int l, int score): tree(tree), i(i), j(j), k(k), l(l), score(score) {}
+    int tree, i, j, k, l;
+    Path(int tree, int i, int j, int k, int l): tree(tree), i(i), j(j), k(k), l(l){}
 
     bool operator==(const Path& other) const {
         return tree == other.tree and i == other.i and j == other.j and
@@ -44,7 +44,13 @@ struct PathHash {
 
 class MIPForest: public Forest {
 private:
-    void addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible) const;
+    std::vector<int> tripleSize;
+    std::vector<int> incomPathSize;
+
+    std::vector<std::vector<int>> conflictedTriplesForEdge;
+    std::vector<std::vector<int>> incompaiblePathPairsForEdge;
+
+    void addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible);
 
 public:
     MIPForest(int forestId, int nodeAmount, int amountOfLabels);
@@ -57,15 +63,16 @@ public:
 
     // Edges
     void printEdgeIds() const;
+    double edgeScore(int e) const;
 
     // Triples
     std::pair<int,int> low(const Triple& t) const;
-    void conflictiveTriples(const MIPForest* F, std::unordered_set<Triple, TripleHash>& conflictive) const;
+    void conflictiveTriples(const MIPForest* F, std::unordered_set<Triple, TripleHash>& conflictive);
     bool isConflictive(const Triple& t, const MIPForest* F) const;
     int amountOfTriples() const;
 
     // Paths
-    void incompatiblePaths(const MIPForest* F, std::unordered_set<Path, PathHash>& incompatible) const;
+    void incompatiblePaths(const MIPForest* F, std::unordered_set<Path, PathHash>& incompatible);
     
     // Forest Operations
     void cut(int node);

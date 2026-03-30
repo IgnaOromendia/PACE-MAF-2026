@@ -206,13 +206,6 @@ int Forest::pathSize(int v, int w) const {
     return pathBetween(v,w).size();
 }
 
-int Forest::pathScore(int v, int w) const {
-    int sum = 0;
-    for(int e: pathBetween(v,w)) 
-        sum += edgeScore(e);
-    return sum;
-}
-
 int Forest::edgeForNode(int v, int w) const {
     int descendant = isAncestor(v,w) ? w : v;
     int ancestor = isAncestor(v,w) ? v : w;
@@ -225,9 +218,6 @@ bool Forest::pathIntersection(int i, int j, int k, int l) const {
     return onPath(l_ij, k, l) or onPath(l_kl, i, j);
 }
 
-int Forest::edgeScore(int e) const {
-    return leafsForEdge[e].size();
-}
 
 int Forest::root() const{
     return this->rootId;

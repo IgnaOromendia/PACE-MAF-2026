@@ -30,6 +30,8 @@ public:
     std::vector<Forest*> trees() const;
     std::vector<BTForest*> btTrees() const;
     std::vector<MIPForest*> mipTrees() const;
+    
+    std::string title() const;
 
     void exportOutput(Forest* forest);
 };

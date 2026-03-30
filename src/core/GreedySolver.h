@@ -10,7 +10,7 @@ private:
     MIPForest* F2;
     std::unordered_set<int> edgeSetF1, edgeSetF2;
 
-    std::pair<int,int> maxFreqEdgeOn(MIPForest* F, std::unordered_set<Triple, TripleHash>& conflictive) const;
+    std::pair<int,double> bestEdgeOn(MIPForest* F) const;
     void addAndCutEdge(int edgeId, MIPForest* F, std::unordered_set<int>& edgeSet);
     void solve();
 

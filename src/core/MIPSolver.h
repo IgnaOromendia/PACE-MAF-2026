@@ -8,6 +8,8 @@
 
 class MIPSolver {
 private:
+    std::string instanceName;
+
     // Instance
     std::vector<MIPForest*> forests;
 

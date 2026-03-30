@@ -1,7 +1,6 @@
 #include "MIPSolver.h"
 
 #include <algorithm>
-#include <iomanip>
 
 MIPSolver::MIPSolver() {}
 
@@ -11,6 +10,8 @@ MIPSolver::~MIPSolver() {
 
 void MIPSolver::solve(Instance& instance) {
     forests = instance.mipTrees();
+
+    instanceName = instance.title();
 
     size_t index = 1;
 
@@ -47,7 +48,6 @@ void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
     // Solve
     mip->solve();
     // mip->exportSolution();
-
 
     pruneAndRegraft(MAFCandidate);
 }

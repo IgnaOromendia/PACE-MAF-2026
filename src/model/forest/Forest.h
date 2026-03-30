@@ -73,10 +73,8 @@ public:
     void removeEdge(int v, int u);
     std::vector<int> pathBetween(int v, int w) const;
     int pathSize(int v, int w) const;
-    int pathScore(int v, int w) const;
     int edgeForNode(int v, int w) const;
     bool pathIntersection(int i, int j, int k, int l) const;
-    int edgeScore(int e) const;
 
     // Root
     int root() const;

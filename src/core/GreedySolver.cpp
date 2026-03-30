@@ -11,28 +11,21 @@ GreedySolver::~GreedySolver() {
     delete F2;
 }
 
-std::pair<int,int> GreedySolver::maxFreqEdgeOn(MIPForest* F, std::unordered_set<Triple, TripleHash>& conflictive) const {
+std::pair<int,double> GreedySolver::bestEdgeOn(MIPForest* F) const {
     std::vector<int> freq(F->amountOfEdges(), 0);
 
-    for(const Triple& t: conflictive) {
-        for(int e: F->pathBetween(t.i, t.j)) 
-                freq[e]++;
-            
-        for(int e: F->pathBetween(t.i, t.k)) 
-            freq[e]++;
-    }
-
-    int bestEdge = -1, maxFreq = -1;
+    int bestEdge = -1;
+    double bestScore = -1;
 
     for(int e = 0; e < F->amountOfEdges(); e++) {
-        if (not F->edgeIsAvailable(e)) continue;
-        if (freq[e] > maxFreq) {
+        double score = F->edgeScore(e);
+        if (bestScore < score) {
+            bestScore = score;
             bestEdge = e;
-            maxFreq = freq[e];
         }
     }
 
-    return {bestEdge, maxFreq};
+    return {bestEdge, bestScore};
 }
 
 void GreedySolver::addAndCutEdge(int edgeId, MIPForest *F, std::unordered_set<int>& edgeSet) {
@@ -42,20 +35,23 @@ void GreedySolver::addAndCutEdge(int edgeId, MIPForest *F, std::unordered_set<in
 }
 
 void GreedySolver::solve() {
-    std::unordered_set<Triple, TripleHash> conflictive;
+    std::unordered_set<Triple, TripleHash> conflictiveTriples;
+    std::unordered_set<Path, PathHash> incompatiblePaths;
     
-    F1->conflictiveTriples(F2, conflictive);
+    F1->conflictiveTriples(F2, conflictiveTriples);
+    F1->incompatiblePaths(F2, incompatiblePaths);
 
-    while (not conflictive.empty()) {
-        auto [edgeF1, freqF1] = maxFreqEdgeOn(F1, conflictive);
-        auto [edgeF2, freqF2] = maxFreqEdgeOn(F2, conflictive);
+    while (not conflictiveTriples.empty()) {
+        auto [edgeF1, freqF1] = bestEdgeOn(F1);
+        auto [edgeF2, freqF2] = bestEdgeOn(F2);
 
         if (freqF1 >= freqF2) 
             addAndCutEdge(edgeF1, F1, edgeSetF1);
         else
             addAndCutEdge(edgeF2, F2, edgeSetF2);
 
-        F1->conflictiveTriples(F2, conflictive);
+        F1->conflictiveTriples(F2, conflictiveTriples);
+        F1->incompatiblePaths(F2, incompatiblePaths);
     }  
 }
 

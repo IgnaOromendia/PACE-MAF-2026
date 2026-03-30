@@ -61,6 +61,10 @@ std::vector<MIPForest*> Instance::mipTrees() const{
     return result;
 }
 
+std::string Instance::title() const {
+    return name;
+}
+
 void Instance::exportOutput(Forest* forest) {
     newickParser.forestToNewick(forest);
 }

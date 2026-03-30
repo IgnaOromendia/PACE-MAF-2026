@@ -24,7 +24,7 @@ public:
     NewickParser();
     ~NewickParser();
 
-    Forest* newickToForest(int id, std::string stringTree, int labelAmount);
+    Forest* newickToForest(int id, std::string stringTree, int amountOfLabels);
     void forestToNewick(Forest* forest);
 };
 

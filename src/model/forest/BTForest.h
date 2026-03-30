@@ -19,8 +19,8 @@ private:
 
 public:
     BTForest(int forestId, int nodeAmount) : BTForest(forestId, nodeAmount, nodeAmount) {};
-    BTForest(int forestId, int nodeAmount, int labelAmount);
-    BTForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int labelAmount);
+    BTForest(int forestId, int nodeAmount, int amountOfLabels);
+    BTForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int amountOfLabels);
     BTForest(const Forest& other);
     BTForest(const BTForest& other);
     ~BTForest();

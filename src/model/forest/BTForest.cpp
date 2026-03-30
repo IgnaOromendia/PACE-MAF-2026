@@ -1,10 +1,10 @@
 #include "BTForest.h"
 
-BTForest::BTForest(int forestId, int nodeAmount, int labelAmount): Forest(forestId, nodeAmount, labelAmount) {
+BTForest::BTForest(int forestId, int nodeAmount, int amountOfLabels): Forest(forestId, nodeAmount, amountOfLabels) {
     initializeNodeInfo(nodeAmount);
 }
 
-BTForest::BTForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int labelAmount): Forest(forestId, adjacency, parents, labelAmount) {
+BTForest::BTForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int amountOfLabels): Forest(forestId, adjacency, parents, amountOfLabels) {
     initializeNodeInfo(nodeAmount);
 }
 

@@ -6,10 +6,10 @@ NewickParser::NewickParser() {}
 
 NewickParser::~NewickParser(){}
 
-Forest* NewickParser::newickToForest(int id, std::string stringTree, int labelAmount) {
+Forest* NewickParser::newickToForest(int id, std::string stringTree, int amountOfLabels) {
     this->stringTree        = std::move(stringTree);
     this->stringTreeSize    = this->stringTree.size();
-    this->labelsAmount      = labelAmount;
+    this->labelsAmount      = amountOfLabels;
     this->nodeId            = labelsAmount;
     this->maxNodes          = 2 * labelsAmount;
     this->index             = 0;

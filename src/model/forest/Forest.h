@@ -41,15 +41,15 @@ protected:
 
 public:
     Forest(int forestId, int nodeAmount) : Forest(forestId, nodeAmount, nodeAmount) {};
-    Forest(int forestId, int nodeAmount, int labelAmount);
-    Forest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int labelAmount);
+    Forest(int forestId, int nodeAmount, int amountOfLabels);
+    Forest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int amountOfLabels);
     Forest(const Forest& other);
     ~Forest();
 
     int id() const;
 
     // Amounts
-    int labelAmount() const;
+    int amountOfLabels() const;
     int amountOfTrees() const;
     int amountOfNodes() const;
 

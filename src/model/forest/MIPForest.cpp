@@ -1,9 +1,9 @@
 #include "MIPForest.h"
 #include <algorithm>
 
-MIPForest::MIPForest(int forestId, int nodeAmount, int labelAmount) : Forest(forestId, nodeAmount, labelAmount) {}
+MIPForest::MIPForest(int forestId, int nodeAmount, int amountOfLabels) : Forest(forestId, nodeAmount, amountOfLabels) {}
 
-MIPForest::MIPForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int labelAmount): Forest(forestId, adjacency, parents, labelAmount) {}
+MIPForest::MIPForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int amountOfLabels): Forest(forestId, adjacency, parents, amountOfLabels) {}
 
 MIPForest::MIPForest(const MIPForest &other): Forest(other) {}
 
@@ -41,10 +41,10 @@ std::pair<int,int> MIPForest::low(const Triple& t) const {
 
 void MIPForest::conflictiveTriples(const MIPForest* F, std::unordered_set<Triple, TripleHash>& conflictive) const {
     conflictive.clear();
-    for(int v = 0; v < labelAmount(); v++) {
-        for(int w = v + 1; w < labelAmount(); w++) {
+    for(int v = 0; v < amountOfLabels(); v++) {
+        for(int w = v + 1; w < amountOfLabels(); w++) {
             if (not sameConnectedComponent(v,w)) continue;
-            for(int z = w + 1; z < labelAmount(); z++) {
+            for(int z = w + 1; z < amountOfLabels(); z++) {
                 if (not sameConnectedComponent(w,z)) continue;
                 Triple t = Triple(v,w,z);
                 if (low(t) != F->low(t)) {

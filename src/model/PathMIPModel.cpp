@@ -1,8 +1,8 @@
 #include "PathMIPModel.h"
 
 void PathMIPModel::setPathConstraintsFor(MIPForest* A, MIPForest* B) {
-    for(int v = 0; v < A->labelAmount(); v++) {
-        for(int w = v + 1; w < A->labelAmount(); w++) {
+    for(int v = 0; v < A->amountOfLabels(); v++) {
+        for(int w = v + 1; w < A->amountOfLabels(); w++) {
             int pathSize = A->pathSize(v,w);
             if (pathSize == 0 or B->pathSize(v,w) == 0) continue;
 
@@ -36,10 +36,10 @@ void PathMIPModel::setLowLeafConstraints() {
     std::vector<char> used(F1->amountOfEdges(), 0);
     int count = 1;
 
-    for(int v = 0; v < F1->labelAmount(); v++) {
-        for(int w = v + 1; w < F1->labelAmount(); w++) {
+    for(int v = 0; v < F1->amountOfLabels(); v++) {
+        for(int w = v + 1; w < F1->amountOfLabels(); w++) {
             if (not F1->sameConnectedComponent(v,w)) continue;
-            for(int z = w + 1; z < F1->labelAmount(); z++) {
+            for(int z = w + 1; z < F1->amountOfLabels(); z++) {
                 // if (not F1->sameConnectedComponent(w,z))
                 if (not F1->isConflictive(Triple(v,w,z), F2)) continue;
 
@@ -65,8 +65,8 @@ void PathMIPModel::setLowLeafConstraints() {
 }
 
 void PathMIPModel::setDisconnectedLeafConstraint() {
-    for(int v = 0; v < F1->labelAmount(); v++) {
-        for(int w = v + 1; w < F1->labelAmount(); w++) {
+    for(int v = 0; v < F1->amountOfLabels(); v++) {
+        for(int w = v + 1; w < F1->amountOfLabels(); w++) {
             if (F1->sameConnectedComponent(v,w)) continue;
 
             IloExpr expr(env);

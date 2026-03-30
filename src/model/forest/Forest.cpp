@@ -1,12 +1,12 @@
 #include "Forest.h"
 #include <algorithm>
 
-Forest::Forest(int forestId, int nodeAmount, int labelAmount) {
+Forest::Forest(int forestId, int nodeAmount, int amountOfLabels) {
     this->forestId      = forestId;
     this->nodeAmount    = nodeAmount;
-    this->labelsAmount  = labelAmount;
+    this->labelsAmount  = amountOfLabels;
     this->treeCount     = nodeAmount;
-    this->rootId        = labelAmount;
+    this->rootId        = amountOfLabels;
     this->edgesAmount   = nodeAmount - 1;
     
     this->adj.assign(nodeAmount, {-1, -1});
@@ -86,7 +86,7 @@ int Forest::id() const {
     return forestId;
 }
 
-int Forest::labelAmount() const {
+int Forest::amountOfLabels() const {
     return labelsAmount;
 }
 

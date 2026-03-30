@@ -47,8 +47,8 @@ private:
     void addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible) const;
 
 public:
-    MIPForest(int forestId, int nodeAmount, int labelAmount);
-    MIPForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int labelAmount);
+    MIPForest(int forestId, int nodeAmount, int amountOfLabels);
+    MIPForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int amountOfLabels);
     MIPForest(const MIPForest& other);
     MIPForest(const Forest& other);
     ~MIPForest();

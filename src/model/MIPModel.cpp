@@ -127,7 +127,7 @@ void MIPModel::addConstraint(IloNum lhs, IloExpr &expr, IloNum rhs, std::string 
 }
 
 void MIPModel::pruneSiblings() {
-    for(int i = 0; i < F1->labelAmount(); i++) {
+    for(int i = 0; i < F1->amountOfLabels(); i++) {
         int sibling = F1->sibling(i);
         
         if (sibling == -1) continue;

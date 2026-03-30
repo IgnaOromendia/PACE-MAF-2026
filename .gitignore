@@ -8,3 +8,5 @@ paceSolver
 stride-downloads/
 stride-logs/
 input/lists/
+edgeScore/
+__pycache__/

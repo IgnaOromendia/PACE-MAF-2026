@@ -199,7 +199,7 @@ void Forest::removeEdge(int v, int u) {
 
 std::vector<int> Forest::pathBetween(int v, int w) const {
     if (not sameConnectedComponent(v,w)) return std::vector<int>();
-    return paths.at({v,w});
+    return paths.at({std::min(v,w), std::max(v,w)});
 }
 
 int Forest::pathSize(int v, int w) const {
@@ -401,7 +401,6 @@ void Forest::precomputePaths(int limit) {
             }
 
             paths.insert({{v,w}, path});
-            paths.insert({{w,v}, path}); // puede q no sea necesario
         }
     }
 }
@@ -414,7 +413,5 @@ void Forest::updatePathsRemoving(int descendantEdge) {
 
         auto& path = paths.at({v, u});
         path.erase(std::remove(path.begin(), path.end(), descendantEdge), path.end());
-
-        paths.insert({{u,v}, paths.at({v,u})}); // capaz no es necesario
     }
 }

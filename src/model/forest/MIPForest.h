@@ -44,17 +44,12 @@ struct PathHash {
 
 class MIPForest: public Forest {
 private:
-    std::vector<int> tripleSize;
-    std::vector<int> incomPathSize;
-
-    std::vector<std::vector<int>> conflictedTriplesForEdge;
-    std::vector<std::vector<int>> incompaiblePathPairsForEdge;
 
     void addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible);
 
 public:
-    MIPForest(int forestId, int nodeAmount, int amountOfLabels);
-    MIPForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int amountOfLabels);
+    MIPForest(int forestId, int nodeAmount, int amountOfLabels) : Forest(forestId, nodeAmount, amountOfLabels) {};
+    MIPForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int amountOfLabels): Forest(forestId, adjacency, parents, amountOfLabels) {};
     MIPForest(const MIPForest& other);
     MIPForest(const Forest& other);
     ~MIPForest();

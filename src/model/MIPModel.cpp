@@ -19,6 +19,7 @@ MIPModel::MIPModel(MIPForest *F1, MIPForest *F2) {
     solver.setOut(env.getNullStream());
     solver.setParam(IloCplex::Param::Threads, 1);
     solver.setParam(IloCplex::Param::Emphasis::MIP, IloCplex::MIPEmphasisFeasibility);
+    // solver.setParam(IloCplex::Param::MIP::Tolerances::MIPGap, 0.1);
     // solver.setParam(IloCplex::Param::TimeLimit, 30.0);
 }
 

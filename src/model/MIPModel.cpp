@@ -4,10 +4,8 @@ MIPModel::MIPModel(MIPForest *F1, MIPForest *F2) {
     this->F1 = F1;
     this->F2 = F2;
 
-    // pruneSiblings();
-
-    F1->conflictiveTriples(F2, conflictiveTriples);
-    F1->incompatiblePaths(F2, incompatiblePaths);
+    // F1->conflictiveTriples(F2, conflictiveTriples);
+    // F1->incompatiblePaths(F2, incompatiblePaths);
 
     model = IloModel(env);
     solver = IloCplex(env);
@@ -125,14 +123,4 @@ void MIPModel::initializeDVariableFor(MIPForest* F) {
 
 void MIPModel::addConstraint(IloNum lhs, IloExpr &expr, IloNum rhs, std::string name) {
     model.add(IloRange(env, lhs, expr, rhs, name.c_str()));
-}
-
-void MIPModel::pruneSiblings() {
-    for(int i = 0; i < F1->amountOfLabels(); i++) {
-        int sibling = F1->sibling(i);
-        
-        if (sibling == -1) continue;
-        
-        // TODO
-    }
 }

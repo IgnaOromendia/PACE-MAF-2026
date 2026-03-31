@@ -12,6 +12,8 @@ private:
     void setPathConstraints();
     void setLowLeafConstraints();
     void setDisconnectedLeafConstraint();
+
+    void addConflictiveTripleConstraint(const Triple& t, std::vector<char>& used, int count);
     
 public:
     PathMIPModel(): MIPModel() {};

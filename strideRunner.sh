@@ -16,6 +16,7 @@ if [ ! -f "$list_path" ]; then
 fi
 
 make clean all
+rm -rf stride-logs
 ./stride download -i "$list_path"
 ./stride run -s ./paceSolver -i "$list_path"
 python3 process_latest_summary.py

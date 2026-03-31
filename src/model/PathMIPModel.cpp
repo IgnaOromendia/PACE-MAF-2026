@@ -40,25 +40,22 @@ void PathMIPModel::setLowLeafConstraints() {
         for(int w = v + 1; w < F1->amountOfLabels(); w++) {
             if (not F1->sameConnectedComponent(v,w)) continue;
             for(int z = w + 1; z < F1->amountOfLabels(); z++) {
-                // if (not F1->sameConnectedComponent(w,z))
-                if (not F1->isConflictive(Triple(v,w,z), F2)) continue;
+                if (not F1->sameConnectedComponent(w, z)) continue;
 
-                IloExpr expr(env);
-                std::string name = "Q_" + std::to_string(v) + "_" + std::to_string(w) + "_" + std::to_string(z);
+                Triple t = Triple(v,w,z);
+                
+                if (not F1->isConflictive(t, F2)) continue;
 
-                for(int edgeId : F1->pathBetween(v,w)) {
-                    expr += this->D[F1->modId()][edgeId];
-                    used[edgeId] = count;
-                }
-                    
+                auto [j, k] = F1->low(t);
+                int i = v == j or v == k ? (w == j or w == k ? z : w) : v;
 
-                for(int edgeId : F1->pathBetween(v,z)) 
-                    if (used[edgeId] < count)
-                        expr += this->D[F1->modId()][edgeId];
+                addConflictiveTripleConstraint(Triple(i,j,k), used, count++);
 
-                count++;
-                addConstraint(1, expr, IloInfinity, name);
-                expr.end();
+                // if (conflictiveTriples.count(Triple(i,j,k)) == 0)
+                //     std::cout << "Triple FOUND: " << i << " " << j << " " << k << "\n";
+                // else {
+                //     conflictiveTriples.erase(Triple(i,j,k));
+                // }
             }
         }
     }
@@ -79,6 +76,23 @@ void PathMIPModel::setDisconnectedLeafConstraint() {
             expr.end();
         }
     }
+}
+
+void PathMIPModel::addConflictiveTripleConstraint(const Triple &t, std::vector<char>& used, int count) {
+    IloExpr expr(env);
+    std::string name = "Q_" + std::to_string(t.i) + "_" + std::to_string(t.j) + "_" + std::to_string(t.k);
+
+    for(int edgeId : F1->pathBetween(t.i,t.j)) {
+        expr += this->D[F1->modId()][edgeId];
+        used[edgeId] = count;
+    }
+
+    for(int edgeId : F1->pathBetween(t.i,t.k)) 
+        if (used[edgeId] < count)
+            expr += this->D[F1->modId()][edgeId];
+
+    addConstraint(1, expr, IloInfinity, name);
+    expr.end();
 }
 
 void PathMIPModel::setObjective() {

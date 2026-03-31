@@ -26,6 +26,10 @@ void MIPForest::printEdgeIds() const {
         std::cout << id << ": " << nodes.first << " - " << nodes.second << "\n";
 }
 
+double MIPForest::edgeScore(int e) const {
+    return 0.0;
+}
+
 std::pair<int,int> MIPForest::low(const Triple& t) const {
     int l_ij = LCA(t.i, t.j);
     int l_ik = LCA(t.i, t.k);
@@ -58,7 +62,6 @@ void MIPForest::conflictiveTriples(const MIPForest* F, std::unordered_set<Triple
 }
 
 bool MIPForest::isConflictive(const Triple &t, const MIPForest *F) const {
-    if (not sameConnectedComponent(t.i, t.j) or not sameConnectedComponent(t.i, t.k) or not sameConnectedComponent(t.j, t.k)) return false;
     return low(t) != F->low(t);
 }
 

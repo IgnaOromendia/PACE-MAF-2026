@@ -25,10 +25,6 @@ public:
     BTForest(const BTForest& other);
     ~BTForest();
 
-    // Siblings info
-    bool areSiblings(int a, int b) const;
-    std::pair<int,int> siblings() const;
-
     // Forest Operations
     BTForest* cut(int node) const;
     BTForest* shrink(int a, int b) const;

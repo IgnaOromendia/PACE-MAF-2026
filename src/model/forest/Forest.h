@@ -23,7 +23,7 @@ protected:
     int edgesAmount, forestId, nodeAmount, labelsAmount, treeCount, rootId, timer;
 
     std::vector<std::pair<int, int> > adj;
-    std::vector<int> parent, tree, visited, tin, tout;
+    std::vector<int> parent, tree, visited, tin, tout, subtreeLeafs, depth;
     std::vector<bool> edgeAvailable;
     std::vector<std::pair<int, int>> edgeToNode;
     std::unordered_map<std::pair<int,int>, int, EdgeHash> nodeToEdge;
@@ -60,11 +60,17 @@ public:
     std::pair<int, int> childrenOf(int node) const;
     int parentOf(int node) const;
     void removeNodeFromAdj(int node);
-    int sibling(int node) const;
+    
+    
     int nextNodeInPathTo(int v, int w) const;
     bool isAncestor(int v, int w) const;
     bool onPath(int v, int i, int j) const;
     bool nodeAvailable(int node) const;
+
+    // Siblings info
+    std::pair<int,int> siblings() const;
+    int sibling(int node) const;
+    bool areSiblings(int a, int b) const;
 
     // Edges
     int amountOfEdges() const;

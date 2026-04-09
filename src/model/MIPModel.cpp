@@ -4,8 +4,8 @@ MIPModel::MIPModel(MIPForest *F1, MIPForest *F2) {
     this->F1 = F1;
     this->F2 = F2;
 
-    // F1->conflictiveTriples(F2, conflictiveTriples);
-    // F1->incompatiblePaths(F2, incompatiblePaths);
+    F1->conflictiveTriples(F2, conflictiveTriples);
+    F1->incompatiblePaths(F2, incompatiblePaths);
 
     model = IloModel(env);
     solver = IloCplex(env);

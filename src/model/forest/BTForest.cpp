@@ -18,20 +18,6 @@ BTForest::BTForest(const BTForest &other): Forest(other) {
 
 BTForest::~BTForest() {}
 
-bool BTForest::areSiblings(int a, int b) const {
-    if (not nodeInRange(a) or not nodeInRange(b)) return false;
-    return parent[a] != -1 && parent[a] == parent[b];
-}
-
-std::pair<int, int> BTForest::siblings() const {
-    for (int a = 0; a < labelsAmount; a++) 
-        for(int b = a + 1; b < labelsAmount; b++) 
-            if (areSiblings(a,b))
-                return { a, b };
-
-    return {-1, -1};
-}
-
 BTForest* BTForest::cut(int node) const {
     BTForest* f = new BTForest(*this);
 

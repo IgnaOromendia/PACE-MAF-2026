@@ -15,6 +15,7 @@ Forest::Forest(int forestId, int nodeAmount, int amountOfLabels) {
     this->leafsForEdge.assign(edgesAmount, std::unordered_set<std::pair<int, int>, EdgeHash>());
     this->tin.assign(nodeAmount, 0);
     this->tout.assign(nodeAmount, 0);
+    this->subtreeLeafs.assign(nodeAmount, 0);
 
     this->tree.resize(nodeAmount);
     std::iota(this->tree.begin(), this->tree.end(), 0);
@@ -39,6 +40,7 @@ Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<i
     this->leafsForEdge.assign(edgesAmount, std::unordered_set<std::pair<int, int>, EdgeHash>());
     this->tin.assign(nodeAmount, 0);
     this->tout.assign(nodeAmount, 0);
+    this->subtreeLeafs.assign(nodeAmount, 0);
 
     treeCount = 0;
     timer = 0;
@@ -78,6 +80,7 @@ Forest::Forest(const Forest& other) {
     leafsForEdge    = other.leafsForEdge;
     tin             = other.tin;
     tout            = other.tout;
+    subtreeLeafs     = other.subtreeLeafs;
 }
 
 Forest::~Forest() {}
@@ -147,6 +150,15 @@ void Forest::removeNodeFromAdj(int node) {
     else adj[ancestor].second = -1;
 }
 
+std::pair<int, int> Forest::siblings() const {
+    for (int a = 0; a < labelsAmount; a++) 
+        for(int b = a + 1; b < labelsAmount; b++) 
+            if (areSiblings(a,b))
+                return { a, b };
+
+    return {-1, -1};
+}
+
 int Forest::sibling(int node) const {
     if (parent[node] == -1) return -1;
 
@@ -157,6 +169,10 @@ int Forest::sibling(int node) const {
         return adj[node].first < labelsAmount ? adj[node].first : -1;
 
     return -1;
+}
+
+bool Forest::areSiblings(int a, int b) const {
+    return parent[a] != -1 and parent[a] == parent[b];
 }
 
 int Forest::nextNodeInPathTo(int v, int w) const {
@@ -209,6 +225,7 @@ int Forest::pathSize(int v, int w) const {
 int Forest::edgeForNode(int v, int w) const {
     int descendant = isAncestor(v,w) ? w : v;
     int ancestor = isAncestor(v,w) ? v : w;
+    if (nodeToEdge.count({descendant, ancestor}) == 0) return -1;
     return nodeToEdge.at({descendant, ancestor});
 }
 
@@ -331,6 +348,7 @@ void Forest::updateComponents(int v) {
         if (not visited[u]) {
             tree[u] = tree[v];
             updateComponents(u);
+            subtreeLeafs[v] += subtreeLeafs[u];
         }
     }
 
@@ -338,8 +356,12 @@ void Forest::updateComponents(int v) {
         if (not visited[w]) {
             tree[w] = tree[v];
             updateComponents(w);
+            subtreeLeafs[v] += subtreeLeafs[w];
         }
     }
+
+    if (isLeaf(v))
+        subtreeLeafs[v] = 1;
 
     tout[v] = timer++;
 }

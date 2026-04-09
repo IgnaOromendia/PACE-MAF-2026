@@ -45,6 +45,17 @@ struct PathHash {
 class MIPForest: public Forest {
 private:
 
+    const double ALPHA  = 1.0;
+    const double BETA   = 1.0;
+    const double MU     = 0.01;
+    
+
+    std::vector<int> tripleSize;
+    std::vector<int> incomPathSize;
+
+    std::vector<std::unordered_set<int>> conflictedTriplesForEdge;
+    std::vector<std::unordered_set<int>> incompaiblePathPairsForEdge;
+
     void addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible);
 
 public:
@@ -58,16 +69,21 @@ public:
 
     // Edges
     void printEdgeIds() const;
-    double edgeScore(int e) const;
+    double triplesScore(int e) const;
+    double pathsScore(int e) const;
+    double edgeScore(int e, MIPForest* F) const;
+    double edgeDamage(int e) const;
 
     // Triples
     std::pair<int,int> low(const Triple& t) const;
     void conflictiveTriples(const MIPForest* F, std::unordered_set<Triple, TripleHash>& conflictive);
     bool isConflictive(const Triple& t, const MIPForest* F) const;
     int amountOfTriples() const;
+    int amountOfConflictiveTriplesPerEdge(int e) const;
 
     // Paths
     void incompatiblePaths(const MIPForest* F, std::unordered_set<Path, PathHash>& incompatible);
+    int amountOfIncompatiblePathsPerEdge(int e) const;
     
     // Forest Operations
     void cut(int node);

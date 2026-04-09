@@ -50,12 +50,6 @@ void PathMIPModel::setLowLeafConstraints() {
                 int i = v == j or v == k ? (w == j or w == k ? z : w) : v;
 
                 addConflictiveTripleConstraint(Triple(i,j,k), used, count++);
-
-                // if (conflictiveTriples.count(Triple(i,j,k)) == 0)
-                //     std::cout << "Triple FOUND: " << i << " " << j << " " << k << "\n";
-                // else {
-                //     conflictiveTriples.erase(Triple(i,j,k));
-                // }
             }
         }
     }

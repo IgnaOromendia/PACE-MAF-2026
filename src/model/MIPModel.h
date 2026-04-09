@@ -35,9 +35,6 @@ protected:
     // CPLEX helps
     void addConstraint(IloNum lhs, IloExpr& expr, IloNum rhs, std::string name);
 
-    // Preprocessing
-    void pruneSiblings();
-
 public:
     MIPModel(): F1(nullptr), F2(nullptr) {};
     MIPModel(MIPForest* F1, MIPForest* F2);

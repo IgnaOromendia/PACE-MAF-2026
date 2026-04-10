@@ -49,9 +49,10 @@ private:
     const double BETA   = 1.0;
     const double MU     = 0.01;
     
+    std::unordered_map<int, Triple> tripleMap;
 
-    std::vector<int> tripleSize;
-    std::vector<int> incomPathSize;
+    std::vector<int> amountOfEdgesForTriple;
+    std::vector<int> amountOfEdgesForIncomPath;
 
     std::vector<std::unordered_set<int>> conflictedTriplesForEdge;
     std::vector<std::unordered_set<int>> incompaiblePathPairsForEdge;

@@ -6,11 +6,13 @@
 struct EdgeInfo {
     int child,parent;
     double edgeScore;
+    int number;
     double tripleScore;
     double pathScore;
     double damage;
     int isLeaf;
-    EdgeInfo(int child, int parent, double es, double ts, double ps, double d, int isLeaf): child(child), parent(parent), edgeScore(es), tripleScore(ts), pathScore(ps), damage(d), isLeaf(isLeaf) {}
+    EdgeInfo(int child, int parent, double es, int num, double ts, double ps, double d, int isLeaf)
+        : child(child), parent(parent), edgeScore(es), number(num), tripleScore(ts), pathScore(ps), damage(d), isLeaf(isLeaf) {}
 };
 
 class GreedySolver {

@@ -61,7 +61,7 @@ void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
         std::cerr << "Could not open CSV file: " << csvPath << "\n";
     } else {
         if (writeHeader) 
-            csv << "edge_id,edge_score,triples,paths,damage,d_value,leaf\n";
+            csv << "edge_id,number,edge_score,triples,paths,damage,d_value,leaf\n";
 
         csv << std::fixed << std::setprecision(6);
 
@@ -71,6 +71,7 @@ void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
 
             csv << id 
                 << "," << e.edgeScore 
+                << "," << e.number
                 << "," << e.tripleScore
                 << "," << e.pathScore
                 << "," << e.damage

@@ -8,8 +8,10 @@ MIPForest::MIPForest(const MIPForest &other): Forest(other) {
     conflictedTriplesForEdge    = other.conflictedTriplesForEdge;
     incompaiblePathPairsForEdge = other.incompaiblePathPairsForEdge;
 
-    tripleSize      = other.tripleSize;
-    incomPathSize   = other.incomPathSize;
+    amountOfEdgesForTriple      = other.amountOfEdgesForTriple;
+    amountOfEdgesForIncomPath   = other.amountOfEdgesForIncomPath;
+
+    tripleMap = other.tripleMap;
 }
 
 MIPForest::MIPForest(const Forest &other): Forest(other) {
@@ -39,19 +41,10 @@ void MIPForest::printEdgeIds() const {
 double MIPForest::triplesScore(int e) const {
     double score = 0.0;
 
-    double involvedMean = 0.0;
-
     for (int t : conflictedTriplesForEdge[e]) {
-        int edgesInvolved = tripleSize[t];
-        // involvedMean += edgesInvolved;
+        int edgesInvolved = amountOfEdgesForTriple[t];
         score += ALPHA / (edgesInvolved * edgesInvolved);
     }
-
-    // involvedMean /= conflictedTriplesForEdge[e].size();
-
-    // std::cout << "Conflicted amount: " << conflictedTriplesForEdge[e].size() << "\n";
-    // std::cout << "Involved mean: " << involvedMean << "\n";
-    // std::cout << "TRIPLE SCORE: " << score << "\n";
 
     return score;
 }
@@ -60,11 +53,9 @@ double MIPForest::pathsScore(int e) const {
     double score = 0.0;
 
     for (int p : incompaiblePathPairsForEdge[e]) {
-        int edgesInvolved = incomPathSize[p];
+        int edgesInvolved = amountOfEdgesForIncomPath[p];
         score += BETA / (edgesInvolved * edgesInvolved);
     }
-
-    // std::cout << "PATH SCORE: " << score << "\n";
 
     return score;
 }
@@ -77,25 +68,17 @@ double MIPForest::edgeScore(int e, MIPForest* F) const {
     const auto& [u, v] = nodesOf(e);
     const auto& [l1, l2] = childrenOf(v);
 
-    // std::cout << std::fixed << std::setprecision(6);
-
-    // std::cout << "EDGE: " << e << "\n";
-
     if (isLeaf(l1) and isLeaf(l2) and F->areSiblings(l1, l2)) return -10;
 
     // Rewards de edge that has least restriction coverage
     double tScore = triplesScore(e);
     double pScore = pathsScore(e);
 
-    // std::cout << "DAMAGE: " << damage << "\n";
-
     score = tScore + pScore;
 
     if (score < 0) score = 0;
 
     if (isLeaf(u)) score += 0.1; // Tie break
-
-    // std::cout << "SCORE: " << score <<  "\n--------\n";
 
     return score;
 }
@@ -120,7 +103,7 @@ std::pair<int,int> MIPForest::low(const Triple& t) const {
 
 void MIPForest::conflictiveTriples(const MIPForest* F, std::unordered_set<Triple, TripleHash>& conflictive) {
     conflictedTriplesForEdge.assign(edgesAmount, std::unordered_set<int>());
-    tripleSize.clear();
+    amountOfEdgesForTriple.clear();
     conflictive.clear();
 
     for(int v = 0; v < amountOfLabels(); v++) {
@@ -138,7 +121,9 @@ void MIPForest::conflictiveTriples(const MIPForest* F, std::unordered_set<Triple
 
                     conflictive.insert(Triple(i, j, k));
 
-                    tripleSize.push_back(triplePathSize);
+                    amountOfEdgesForTriple.push_back(triplePathSize);
+
+                    tripleMap.insert({id, Triple(i,j,k)});
 
                     for (int e: pathBetween(i,j))
                         conflictedTriplesForEdge[e].insert(id);
@@ -166,7 +151,7 @@ int MIPForest::amountOfConflictiveTriplesPerEdge(int e) const {
 
 void MIPForest::incompatiblePaths(const MIPForest *F, std::unordered_set<Path, PathHash> &incompatible) {
     incompaiblePathPairsForEdge.assign(edgesAmount, std::unordered_set<int>());
-    incomPathSize.clear();
+    amountOfEdgesForIncomPath.clear();
     incompatible.clear();
 
     for(int i = 0; i < labelsAmount; i++) {
@@ -267,10 +252,10 @@ void MIPForest::addIncompatiblePathPartition(const MIPForest* F, int a, int b, i
     if (not pathIntersection(a,b,c,d) and F->pathIntersection(a,b,c,d)) {
         incompatible.insert(Path(modId(),a, b, c, d));
 
-        int id = incomPathSize.size();
+        int id = amountOfEdgesForIncomPath.size();
         const int incompatiblePathSize = pathSize(a,b) + pathSize(c,d);
         
-        incomPathSize.push_back(incompatiblePathSize);
+        amountOfEdgesForIncomPath.push_back(incompatiblePathSize);
 
         for (int e: pathBetween(a,b))
             incompaiblePathPairsForEdge[e].insert(id);

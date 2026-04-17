@@ -61,9 +61,9 @@ void MIPModel::cplexSolve(bool exportModel) {
     }
 }
 
-void MIPModel::addPrimalHeuristic(const std::unordered_set<int> &edgesF1) {
+void MIPModel::addPrimalHeuristic(const std::unordered_set<int> &edgesToCut) {
 
-    for (int e: edgesF1) {
+    for (int e: edgesToCut) {
         primalHeuristicVars.add(D[0][e]);
         primalHeuristicVals.add(1.0);
     }

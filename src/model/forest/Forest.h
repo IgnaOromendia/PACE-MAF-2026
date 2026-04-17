@@ -88,7 +88,6 @@ public:
 
     // Debug
     void printAdjAndParents() const;
-    void printAll() const;
         
 };
 

@@ -12,11 +12,14 @@ MIPForest::MIPForest(const MIPForest &other): Forest(other) {
     amountOfEdgesForIncomPath   = other.amountOfEdgesForIncomPath;
 
     tripleMap = other.tripleMap;
+
+    originalEdge = other.originalEdge;
 }
 
 MIPForest::MIPForest(const Forest &other): Forest(other) {
     conflictedTriplesForEdge.assign(edgesAmount, std::unordered_set<int>());
     incompaiblePathPairsForEdge.assign(edgesAmount, std::unordered_set<int>());
+    originalEdge.assign(edgesAmount, 1);
 }
 
 MIPForest::~MIPForest() {}
@@ -42,12 +45,15 @@ double MIPForest::triplesScore(int e) const {
     double score = 0.0;
 
     for (int t : conflictedTriplesForEdge[e]) {
+        // const Triple& tri = tripleMap.at(t);
+        // std::cout << tri.i << " " << tri.j << " " << tri.k << "\n";
         int edgesInvolved = amountOfEdgesForTriple[t];
         score += ALPHA / (edgesInvolved * edgesInvolved);
     }
 
     return score;
 }
+
 
 double MIPForest::pathsScore(int e) const {
     double score = 0.0;
@@ -78,7 +84,13 @@ double MIPForest::edgeScore(int e, MIPForest* F) const {
 
     if (score < 0) score = 0;
 
-    if (isLeaf(u)) score += 0.1; // Tie break
+    // if (isLeaf(u)) score += 0.1; // Tie break
+
+    // std::cout << "EDGE: " << e 
+    //           << "\tSCORE:\t" << score
+    //           << "\tTRIPLE:\t" << tScore
+    //           << "\tPATH:\t" << pScore
+    //           << "\n-------\n";
 
     return score;
 }
@@ -90,6 +102,10 @@ double MIPForest::edgeDamage(int e) const {
     return MU * a * b; 
 }
 
+bool MIPForest::isOriginal(int e) const {
+    return originalEdge[e];
+}
+
 std::pair<int,int> MIPForest::low(const Triple& t) const {
     int l_ij = LCA(t.i, t.j);
     int l_ik = LCA(t.i, t.k);
@@ -98,7 +114,7 @@ std::pair<int,int> MIPForest::low(const Triple& t) const {
     if (l_ij == l_ik) return {t.j, t.k};
     if (l_ij == l_jk) return {t.i, t.k};
 
-    return {t.i, t.j};
+    return std::minmax(t.i, t.j);
 }
 
 void MIPForest::conflictiveTriples(const MIPForest* F, std::unordered_set<Triple, TripleHash>& conflictive) {
@@ -223,6 +239,7 @@ void MIPForest::regraft() {
                 nodeToEdge.insert({{descendant, ancestor}, newEdgeId});
                 edgeAvailable[newEdgeId] = true;
                 edgeToNode[newEdgeId] = {descendant, ancestor};
+                originalEdge[newEdgeId] = 0;
 
                 if (adj[ancestor].first == node) 
                     adj[ancestor].first = descendant;
@@ -251,6 +268,8 @@ void MIPForest::regraft() {
 void MIPForest::addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible) {
     if (not pathIntersection(a,b,c,d) and F->pathIntersection(a,b,c,d)) {
         incompatible.insert(Path(modId(),a, b, c, d));
+
+        // std::cout << a << " " << b << " " << c << " " << d << "\n";
 
         int id = amountOfEdgesForIncomPath.size();
         const int incompatiblePathSize = pathSize(a,b) + pathSize(c,d);

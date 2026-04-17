@@ -61,18 +61,13 @@ void MIPModel::cplexSolve(bool exportModel) {
     }
 }
 
-void MIPModel::addPrimalHeuristic(const std::unordered_set<int> &edgesF1, const std::unordered_set<int> &edgesF2) {
+void MIPModel::addPrimalHeuristic(const std::unordered_set<int> &edgesF1) {
 
-    for(int e = 0; e < D[0].getSize(); e++) {
+    for (int e: edgesF1) {
         primalHeuristicVars.add(D[0][e]);
-        primalHeuristicVals.add(edgesF1.count(e) ? 1.0 : 0.0);
+        primalHeuristicVals.add(1.0);
     }
-
-    for(int e = 0; e < D[1].getSize(); e++) {
-        primalHeuristicVars.add(D[1][e]);
-        primalHeuristicVals.add(edgesF2.count(e) ? 1.0 : 0.0);
-    }
-
+    
 }
 
 int MIPModel::getValueFor(int forestId, int edgeId) const {

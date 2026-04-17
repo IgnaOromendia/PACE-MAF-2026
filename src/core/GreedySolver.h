@@ -24,7 +24,6 @@ private:
 
     std::pair<int,double> bestEdgeOn(MIPForest* F1, MIPForest* F2) const;
     void addAndCutEdge(int edgeId, MIPForest* F, MIPForest* F2, std::unordered_set<int>& edgeSet);
-    void solve();
 
 public:
     GreedySolver(MIPForest* F1, MIPForest* F2);
@@ -32,6 +31,9 @@ public:
 
     std::unordered_set<int> edgesToCutF1() const;
     std::unordered_set<int> edgesToCutF2() const;
+
+    void solveUsingConstraintsScore();
+    void solveUsingSiblingsScore();
 
     std::vector<EdgeInfo> edgesInfo;
 };

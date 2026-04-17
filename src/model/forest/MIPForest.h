@@ -51,6 +51,8 @@ private:
     
     std::unordered_map<int, Triple> tripleMap;
 
+    std::vector<char> originalEdge;
+
     std::vector<int> amountOfEdgesForTriple;
     std::vector<int> amountOfEdgesForIncomPath;
 
@@ -60,8 +62,8 @@ private:
     void addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible);
 
 public:
-    MIPForest(int forestId, int nodeAmount, int amountOfLabels) : Forest(forestId, nodeAmount, amountOfLabels) {};
-    MIPForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int amountOfLabels): Forest(forestId, adjacency, parents, amountOfLabels) {};
+    MIPForest(int forestId, int nodeAmount, int amountOfLabels) : Forest(forestId, nodeAmount, amountOfLabels) { originalEdge.assign(nodeAmount-1, 1); };
+    MIPForest(int forestId, std::vector<std::pair<int, int>> adjacency, std::vector<int> parents, int amountOfLabels): Forest(forestId, adjacency, parents, amountOfLabels) { originalEdge.assign(adjacency.size()-1, 1); };
     MIPForest(const MIPForest& other);
     MIPForest(const Forest& other);
     ~MIPForest();
@@ -74,6 +76,7 @@ public:
     double pathsScore(int e) const;
     double edgeScore(int e, MIPForest* F) const;
     double edgeDamage(int e) const;
+    bool isOriginal(int e) const;
 
     // Triples
     std::pair<int,int> low(const Triple& t) const;

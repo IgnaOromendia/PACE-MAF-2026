@@ -51,7 +51,7 @@ public:
 
     void cplexSolve(bool exportModel = false);
 
-    void addPrimalHeuristic(const std::unordered_set<int>& edgesF1, const std::unordered_set<int>& edgesF2);
+    void addPrimalHeuristic(const std::unordered_set<int>& edgesF1);
     int getValueFor(int forestId, int edgeId) const;
     virtual int getValueFor(int forestId, int i, int j) const;
     void exportSolution() const;

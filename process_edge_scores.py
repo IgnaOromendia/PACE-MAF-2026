@@ -1,8 +1,10 @@
+import json
 from pathlib import Path
 
 import pandas as pd
 
 INPUT_PATH = Path("./edgeScore")
+STRIDE_DOWNLOADS_PATH = Path("./stride-downloads")
 REQUIRED_COLUMNS = ["edge_id", "number", "edge_score", "triples", "paths", "damage", "d_value", "leaf"]
 
 
@@ -69,6 +71,47 @@ def count_instances_with_all_d_value(df: pd.DataFrame, target: int) -> int:
     )
 
 
+def instances_with_all_d_value(df: pd.DataFrame, target: int, limit: int = 5) -> list[str]:
+    matching_instances = (
+        df.groupby("instance", sort=True)["d_value"]
+        .apply(lambda values: (values == target).all())
+    )
+
+    return matching_instances[matching_instances].index[:limit].tolist()
+
+
+def read_stride_instance_name(stride_path: Path) -> str | None:
+    with stride_path.open(encoding="utf-8", errors="replace") as stride_file:
+        for line in stride_file:
+            if line.startswith("#s name "):
+                return json.loads(line.removeprefix("#s name ").strip())
+
+    return None
+
+
+def find_stride_files_by_instance(download_dir: Path, instances: list[str]) -> dict[str, Path]:
+    pending_instances = set(instances)
+    stride_files_by_instance = {}
+
+    if not pending_instances:
+        return stride_files_by_instance
+
+    for stride_path in sorted(download_dir.rglob("*")):
+        if not stride_path.is_file():
+            continue
+
+        instance_name = read_stride_instance_name(stride_path)
+        if instance_name not in pending_instances:
+            continue
+
+        stride_files_by_instance[instance_name] = stride_path
+        pending_instances.remove(instance_name)
+        if not pending_instances:
+            break
+
+    return stride_files_by_instance
+
+
 def count_instances_with_all_d_value_except_one(df: pd.DataFrame) -> int:
     return int(
         df.groupby("instance", sort=True)["d_value"]
@@ -97,6 +140,8 @@ if __name__ == "__main__":
 
     instances_all_one   = count_instances_with_all_d_value(data, 1)
     instances_all_zero  = count_instances_with_all_d_value(data, 0)
+    zero_precision_examples = instances_with_all_d_value(data, 0)
+    zero_precision_files = find_stride_files_by_instance(STRIDE_DOWNLOADS_PATH, zero_precision_examples)
     instances_one_error = count_instances_with_all_d_value_except_one(data)
 
     print(f"Archivos cargados: {total_instances}")
@@ -115,6 +160,14 @@ if __name__ == "__main__":
         f"Instancias de nula precisión: {instances_all_zero} "
         f"({instances_all_zero / total_instances * 100:.2f}%)"
     )
+    if zero_precision_examples:
+        print("Ejemplos de archivos con nula precisión:")
+        for instance in zero_precision_examples:
+            stride_file = zero_precision_files.get(instance)
+            if stride_file is None:
+                print(f"  no encontrado en {STRIDE_DOWNLOADS_PATH}: {instance}")
+            else:
+                print(f"  {stride_file}")
     print(
         f"Instancias con un único error: {instances_one_error} "
         f"({instances_one_error / total_instances * 100:.2f}%)"

@@ -5,6 +5,7 @@ import pandas as pd
 
 INPUT_PATH = Path("./edgeScore")
 STRIDE_DOWNLOADS_PATH = Path("./stride-downloads")
+ZERO_PRECISION_FILE_LIMIT = 3
 REQUIRED_COLUMNS = ["edge_id", "number", "edge_score", "triples", "paths", "damage", "d_value", "leaf"]
 
 
@@ -71,13 +72,21 @@ def count_instances_with_all_d_value(df: pd.DataFrame, target: int) -> int:
     )
 
 
-def instances_with_all_d_value(df: pd.DataFrame, target: int, limit: int = 5) -> list[str]:
+def instances_with_all_d_value(
+    df: pd.DataFrame,
+    target: int,
+    limit: int | None = None,
+) -> list[str]:
     matching_instances = (
         df.groupby("instance", sort=True)["d_value"]
         .apply(lambda values: (values == target).all())
     )
 
-    return matching_instances[matching_instances].index[:limit].tolist()
+    instances = matching_instances[matching_instances].index
+    if limit is not None:
+        instances = instances[:limit]
+
+    return instances.tolist()
 
 
 def read_stride_instance_name(stride_path: Path) -> str | None:
@@ -87,6 +96,18 @@ def read_stride_instance_name(stride_path: Path) -> str | None:
                 return json.loads(line.removeprefix("#s name ").strip())
 
     return None
+
+
+def read_stride_n(stride_path: Path) -> int:
+    with stride_path.open(encoding="utf-8", errors="replace") as stride_file:
+        stride_file.readline()
+        problem_line = stride_file.readline().strip()
+
+    parts = problem_line.split()
+    if len(parts) != 3 or parts[0] != "#p":
+        raise ValueError(f"{stride_path} no tiene una segunda línea '#p t n' válida")
+
+    return int(parts[2])
 
 
 def find_stride_files_by_instance(download_dir: Path, instances: list[str]) -> dict[str, Path]:
@@ -128,6 +149,18 @@ def average_metric_by_instance(df: pd.DataFrame, metric_fn) -> float:
 
     return float(sum(metric_by_instance) / len(metric_by_instance))
 
+
+def smallest_stride_files_by_n(
+    stride_files_by_instance: dict[str, Path],
+    limit: int,
+) -> list[tuple[str, Path, int]]:
+    files_with_n = [
+        (instance, stride_path, read_stride_n(stride_path))
+        for instance, stride_path in stride_files_by_instance.items()
+    ]
+
+    return sorted(files_with_n, key=lambda item: (item[2], item[0]))[:limit]
+
 if __name__ == "__main__":
     data = load_data(INPUT_PATH)
     total_instances     = data["instance"].nunique()
@@ -142,6 +175,10 @@ if __name__ == "__main__":
     instances_all_zero  = count_instances_with_all_d_value(data, 0)
     zero_precision_examples = instances_with_all_d_value(data, 0)
     zero_precision_files = find_stride_files_by_instance(STRIDE_DOWNLOADS_PATH, zero_precision_examples)
+    smallest_zero_precision_files = smallest_stride_files_by_n(
+        zero_precision_files,
+        ZERO_PRECISION_FILE_LIMIT,
+    )
     instances_one_error = count_instances_with_all_d_value_except_one(data)
 
     print(f"Archivos cargados: {total_instances}")
@@ -157,18 +194,15 @@ if __name__ == "__main__":
         f"({instances_all_one / total_instances * 100:.2f}%)"
     )
     print(
+        f"Instancias con un único error: {instances_one_error} "
+        f"({instances_one_error / total_instances * 100:.2f}%)"
+    )
+    print(
         f"Instancias de nula precisión: {instances_all_zero} "
         f"({instances_all_zero / total_instances * 100:.2f}%)"
     )
     if zero_precision_examples:
-        print("Ejemplos de archivos con nula precisión:")
-        for instance in zero_precision_examples:
-            stride_file = zero_precision_files.get(instance)
-            if stride_file is None:
-                print(f"  no encontrado en {STRIDE_DOWNLOADS_PATH}: {instance}")
-            else:
-                print(f"  {stride_file}")
-    print(
-        f"Instancias con un único error: {instances_one_error} "
-        f"({instances_one_error / total_instances * 100:.2f}%)"
-    )
+        print(f"{ZERO_PRECISION_FILE_LIMIT} archivos con nula precisión de menor n:")
+        for _, stride_file, n_value in smallest_zero_precision_files:
+            print(f"  n={n_value}: {stride_file}")
+    

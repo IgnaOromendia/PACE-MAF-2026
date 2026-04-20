@@ -2,6 +2,8 @@
 
 Solution for the PACE 2026 Challenge.
 
+My approach was doing a warm start with a greedy selection of edges and then an implementation of an ILP model for SPR-distance which gives a MAF. Although for a lot of instances it had a successful result, it wasn't fast enough.
+
 ## Makefile
 
 ```sh

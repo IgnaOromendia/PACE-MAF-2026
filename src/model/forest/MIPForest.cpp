@@ -84,8 +84,6 @@ double MIPForest::edgeScore(int e, MIPForest* F) const {
 
     if (score < 0) score = 0;
 
-    // if (isLeaf(u)) score += 0.1; // Tie break
-
     // std::cout << "EDGE: " << e 
     //           << "\tSCORE:\t" << score
     //           << "\tTRIPLE:\t" << tScore
@@ -139,7 +137,7 @@ void MIPForest::conflictiveTriples(const MIPForest* F, std::unordered_set<Triple
 
                     amountOfEdgesForTriple.push_back(triplePathSize);
 
-                    tripleMap.insert({id, Triple(i,j,k)});
+                    // tripleMap.insert({id, Triple(i,j,k)});
 
                     for (int e: pathBetween(i,j))
                         conflictedTriplesForEdge[e].insert(id);

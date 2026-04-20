@@ -29,10 +29,10 @@ void GreedySolver::addAndCutEdge(int edgeId, MIPForest *F, MIPForest* F2, std::u
     // std::cout << "F" << F->modId() << "\n";
     // F->printAdjAndParents();
     // F->printEdgeIds();
-    std::cout << "CUTTING  -------------------------------------\n"; 
+    // std::cout << "CUTTING  -------------------------------------\n"; 
     auto[l, u] = F->nodesOf(edgeId);
-    std::cout << edgeId << ": " << l << " " << u << "\n";
-    edgesInfo.emplace_back(l, u, F->edgeScore(edgeId, F2), edgesInfo.size(), F->triplesScore(edgeId), F->pathsScore(edgeId), F->edgeDamage(edgeId), F->isLeaf(l));
+    // std::cout << edgeId << ": " << l << " " << u << "\n";
+    // edgesInfo.emplace_back(l, u, F->edgeScore(edgeId, F2), edgesInfo.size(), F->triplesScore(edgeId), F->pathsScore(edgeId), F->edgeDamage(edgeId), F->isLeaf(l));
     F->cut(l);
     F->regraft();
     if (F->isOriginal(edgeId)) edgeSet.insert(edgeId);

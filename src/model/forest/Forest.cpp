@@ -150,6 +150,10 @@ void Forest::removeNodeFromAdj(int node) {
     else adj[ancestor].second = -1;
 }
 
+const std::unordered_set<std::pair<int, int>, EdgeHash>& Forest::leafsFor(int edge) const {
+    return leafsForEdge[edge];
+}
+
 std::pair<int, int> Forest::siblings() const {
     for (int a = 0; a < labelsAmount; a++) 
         for(int b = a + 1; b < labelsAmount; b++) 
@@ -213,8 +217,9 @@ void Forest::removeEdge(int v, int u) {
     edgeAvailable[edgeId] = false;
 }
 
-std::vector<int> Forest::pathBetween(int v, int w) const {
-    if (not sameConnectedComponent(v,w)) return std::vector<int>();
+const std::vector<int>& Forest::pathBetween(int v, int w) const {
+    static const std::vector<int> emptyPath;
+    if (not sameConnectedComponent(v,w)) return emptyPath;
     return paths.at({std::min(v,w), std::max(v,w)});
 }
 

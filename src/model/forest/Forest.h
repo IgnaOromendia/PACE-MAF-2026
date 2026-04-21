@@ -60,7 +60,7 @@ public:
     std::pair<int, int> childrenOf(int node) const;
     int parentOf(int node) const;
     void removeNodeFromAdj(int node);
-    
+    const std::unordered_set<std::pair<int, int>, EdgeHash>& leafsFor(int edge) const;
     
     int nextNodeInPathTo(int v, int w) const;
     bool isAncestor(int v, int w) const;
@@ -77,7 +77,7 @@ public:
     std::pair<int, int> nodesOf(int edgeId) const;
     bool edgeIsAvailable(int edgeId) const;
     void removeEdge(int v, int u);
-    std::vector<int> pathBetween(int v, int w) const;
+    const std::vector<int>& pathBetween(int v, int w) const;
     int pathSize(int v, int w) const;
     int edgeForNode(int v, int w) const;
     bool pathIntersection(int i, int j, int k, int l) const;

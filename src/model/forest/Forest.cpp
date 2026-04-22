@@ -293,15 +293,20 @@ bool Forest::nodeInRange(int a) const {
 
 void Forest::tagEdges() {
     int edgeCount = 0;
+
     edgeToNode.clear();
     nodeToEdge.clear();
     edgeToNode.reserve(edgesAmount);
     nodeToEdge.reserve(edgesAmount);
+
     for(int v = 0; v < nodeAmount; v++){
         if (not nodeAvailable(v) or parent[v] == -1) continue;
         edgeToNode.push_back({v, parent[v]});
         nodeToEdge.insert({{v, parent[v]}, edgeCount++});
     }
+
+    edgesAmount = edgeToNode.size();
+    edgeAvailable.resize(edgesAmount);
 }
 
 void Forest::walkAndAdd(int from, int lca, int to, std::vector<int> &path) {

@@ -26,13 +26,18 @@ void MIPSolver::solve(Instance& instance) {
 void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
     // Inicializa modelo
     // mip = std::make_unique<PathMIPModel>(MAFCandidate, F);
-    mip = std::make_unique<PairMIPModel>(MAFCandidate, F);
 
     // MAFCandidate->printAdjAndParents();
-    // MAFCandidate->printEdgeIds();
-    // std::cout << "----\n";
     // F->printAdjAndParents();
-    // F->printEdgeIds(); 
+
+    // std::cout << "---- SHRINKING ----\n";
+
+    MAFCandidate->shrinkWith(F);
+
+    MAFCandidate->initializeStructures();
+    F->initializeStructures();
+
+    mip = std::make_unique<PairMIPModel>(MAFCandidate, F);
 
     GreedySolver greedy = GreedySolver(MAFCandidate, F);
     greedy.solveUsingConstraintsScore();
@@ -49,38 +54,12 @@ void MIPSolver::solveFor(MIPForest* MAFCandidate, MIPForest* F) {
     // mip->exportSolution();
 
     // Write stats
-    // const std::string csvPath = "./edgeScore/" + instanceName + ".csv";
-    // std::ifstream existingCsv(csvPath);
-    // const bool writeHeader = !existingCsv.good() || existingCsv.peek() == std::ifstream::traits_type::eof();
-    // existingCsv.close();
-
-    // std::ofstream csv(csvPath, std::ios::app);
-
-    // if (!csv.is_open()) {
-    //     std::cerr << "Could not open CSV file: " << csvPath << "\n";
-    // } else {
-    //     if (writeHeader) 
-    //         csv << "edge_id,number,edge_score,triples,paths,damage,d_value,leaf\n";
-
-    //     csv << std::fixed << std::setprecision(6);
-
-    //     for(const EdgeInfo& e: greedy.edgesInfo) {
-
-    //         int id = MAFCandidate->edgeForNode(e.child, e.parent);
-
-    //         csv << id 
-    //             << "," << e.edgeScore 
-    //             << "," << e.number
-    //             << "," << e.tripleScore
-    //             << "," << e.pathScore
-    //             << "," << e.damage
-    //             << "," << (id != -1 ? mip->getValueFor(MAFCandidate->modId(), id) : -1)
-    //             << "," << e.isLeaf << "\n";
-    //     }
-    // }
-    
+    // writeEdgeStats(MAFCandidate, greedy.edgesInfo);
 
     pruneAndRegraft(MAFCandidate);
+
+    MAFCandidate->expand();
+
 }
 
 void MIPSolver::pruneAndRegraft(MIPForest* F) const {
@@ -98,4 +77,36 @@ void MIPSolver::pruneAndRegraft(MIPForest* F) const {
 
     F->regraft();
 
+}
+
+void MIPSolver::writeEdgeStats(MIPForest *F, std::vector<EdgeInfo> &edgesInfo) const {
+    const std::string csvPath = "./edgeScore/" + instanceName + ".csv";
+    std::ifstream existingCsv(csvPath);
+    const bool writeHeader = !existingCsv.good() || existingCsv.peek() == std::ifstream::traits_type::eof();
+    existingCsv.close();
+
+    std::ofstream csv(csvPath, std::ios::app);
+
+    if (!csv.is_open()) {
+        std::cerr << "Could not open CSV file: " << csvPath << "\n";
+    } else {
+        if (writeHeader) 
+            csv << "edge_id,number,edge_score,triples,paths,damage,d_value,leaf\n";
+
+        csv << std::fixed << std::setprecision(6);
+
+        for(const EdgeInfo& e: edgesInfo) {
+
+            int id = F->edgeForNode(e.child, e.parent);
+
+            csv << id 
+                << "," << e.edgeScore 
+                << "," << e.number
+                << "," << e.tripleScore
+                << "," << e.pathScore
+                << "," << e.damage
+                << "," << (id != -1 ? mip->getValueFor(F->modId(), id) : -1)
+                << "," << e.isLeaf << "\n";
+        }
+    }
 }

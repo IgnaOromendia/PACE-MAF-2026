@@ -18,6 +18,7 @@ private:
 
     void solveFor(MIPForest* F1, MIPForest* F2);
     void pruneAndRegraft(MIPForest* F) const;
+    void writeEdgeStats(MIPForest* F, std::vector<EdgeInfo>& edgesInfo) const;
 
 public:
     MIPSolver();

@@ -261,15 +261,9 @@ void MIPForest::regraft() {
 void MIPForest::shrinkWith(MIPForest *F2) {
     int L = amountOfLabels();
 
-    std::vector<std::vector<ShrinkInfo>> containsF1(amountOfNodes(), std::vector<ShrinkInfo>());
-    std::vector<std::vector<ShrinkInfo>> containsF2(amountOfNodes(), std::vector<ShrinkInfo>());
+    nodeContainer.assign(amountOfNodes(), std::vector<ShrinkInfo>());
+    F2->nodeContainer.assign(amountOfNodes(), std::vector<ShrinkInfo>());
 
-    std::vector<std::pair<int,int>> adjF1 = adj;
-    std::vector<std::pair<int,int>> adjF2 = F2->adj;
-
-    std::vector<int> parentF1 = parent;
-    std::vector<int> parentF2 = F2->parent;
-    
     bool modified = true;
 
     activeLabel.assign(amountOfNodes(), true);
@@ -282,38 +276,24 @@ void MIPForest::shrinkWith(MIPForest *F2) {
             for(int b = a + 1; b < L; b++) {
                 if (not activeLabel[b]) continue;
 
-                bool siblingsF1 = parentF1[a] == parentF1[b] and parentF1[a] != -1;
-                bool siblingsF2 = parentF2[a] == parentF2[b] and parentF2[a] != -1;
+                bool siblingsF1 = parent[a] == parent[b] and parent[a] != -1;
+                bool siblingsF2 = F2->parent[a] == F2->parent[b] and F2->parent[a] != -1;
 
                 // Hace rotacion con el menor sibling y parent
                 if (siblingsF1 and siblingsF2) {
                     modified = true;
 
-                    modifyAdjecncy(a,b, adjF1, parentF1, containsF1);
-                    modifyAdjecncy(a,b, adjF2, parentF2, containsF2);
+                    modifyAdjecncy(a,b, adj, parent, nodeContainer);
+                    modifyAdjecncy(a,b, F2->adj, F2->parent, F2->nodeContainer);
 
                     activeLabel[b] = false;
                 }
             }
         }
     }
-
-    adj = adjF1;
-    parent = parentF1;
-    nodeContainer = containsF1;
-
-    F2->adj = adjF2;
-    F2->parent = parentF2;
-    F2->nodeContainer = containsF2; 
 }
 
 void MIPForest::expand() {
-
-    std::vector<int> newParent = parent;
-    std::vector<std::pair<int, int>> newAdj = adj;
-
-    newParent.resize(nodeAmount);
-    newAdj.resize(nodeAmount);
 
     for(int node = 0; node < nodeAmount; node++) {
 
@@ -321,25 +301,23 @@ void MIPForest::expand() {
             ShrinkInfo info = nodeContainer[node].back();
             nodeContainer[node].pop_back();
 
-            int new_g = newParent[node];
+            int new_g = parent[node];
 
-            newParent[info.parent] = new_g;
-            newAdj[info.parent] = {node, info.sibling};
+            parent[info.parent] = new_g;
+            adj[info.parent] = {node, info.sibling};
             
-            // newAdj[node] = {-1, -1};
-            newParent[node] = info.parent;
-            newParent[info.sibling] = info.parent;
+            // adj[node] = {-1, -1};
+            parent[node] = info.parent;
+            parent[info.sibling] = info.parent;
 
             if (new_g != -1) {
-                auto [l, r] = newAdj[new_g];
-                newAdj[new_g] = l == node ? std::make_pair(info.parent, r) : std::make_pair(l, info.parent);
+                auto [l, r] = adj[new_g];
+                adj[new_g] = l == node ? std::make_pair(info.parent, r) : std::make_pair(l, info.parent);
             }
         }
 
     }
 
-    adj = newAdj;
-    parent = newParent;
 }
 
 void MIPForest::addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible) {

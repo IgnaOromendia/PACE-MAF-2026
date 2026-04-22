@@ -11,9 +11,9 @@ MIPForest::MIPForest(const MIPForest &other): Forest(other) {
     amountOfEdgesForTriple      = other.amountOfEdgesForTriple;
     amountOfEdgesForIncomPath   = other.amountOfEdgesForIncomPath;
 
-    tripleMap = other.tripleMap;
-
     originalEdge = other.originalEdge;
+
+    nodeContainer = other.nodeContainer;
 }
 
 MIPForest::MIPForest(const Forest &other): Forest(other) {
@@ -45,15 +45,12 @@ double MIPForest::triplesScore(int e) const {
     double score = 0.0;
 
     for (int t : conflictedTriplesForEdge[e]) {
-        // const Triple& tri = tripleMap.at(t);
-        // std::cout << tri.i << " " << tri.j << " " << tri.k << "\n";
         int edgesInvolved = amountOfEdgesForTriple[t];
         score += ALPHA / (edgesInvolved * edgesInvolved);
     }
 
     return score;
 }
-
 
 double MIPForest::pathsScore(int e) const {
     double score = 0.0;
@@ -136,8 +133,6 @@ void MIPForest::conflictiveTriples(const MIPForest* F, std::unordered_set<Triple
                     conflictive.insert(Triple(i, j, k));
 
                     amountOfEdgesForTriple.push_back(triplePathSize);
-
-                    // tripleMap.insert({id, Triple(i,j,k)});
 
                     for (int e: pathBetween(i,j))
                         conflictedTriplesForEdge[e].insert(id);
@@ -263,11 +258,93 @@ void MIPForest::regraft() {
     }
 }
 
+void MIPForest::shrinkWith(MIPForest *F2) {
+    int L = amountOfLabels();
+
+    std::vector<std::vector<ShrinkInfo>> containsF1(amountOfNodes(), std::vector<ShrinkInfo>());
+    std::vector<std::vector<ShrinkInfo>> containsF2(amountOfNodes(), std::vector<ShrinkInfo>());
+
+    std::vector<std::pair<int,int>> adjF1 = adj;
+    std::vector<std::pair<int,int>> adjF2 = F2->adj;
+
+    std::vector<int> parentF1 = parent;
+    std::vector<int> parentF2 = F2->parent;
+    
+    bool modified = true;
+
+    activeLabel.assign(amountOfNodes(), true);
+
+    while(modified) {
+        modified = false;
+
+        for(int a = 0; a < L; a++) {
+            if (not activeLabel[a]) continue;
+            for(int b = a + 1; b < L; b++) {
+                if (not activeLabel[b]) continue;
+
+                bool siblingsF1 = parentF1[a] == parentF1[b] and parentF1[a] != -1;
+                bool siblingsF2 = parentF2[a] == parentF2[b] and parentF2[a] != -1;
+
+                // Hace rotacion con el menor sibling y parent
+                if (siblingsF1 and siblingsF2) {
+                    modified = true;
+
+                    modifyAdjecncy(a,b, adjF1, parentF1, containsF1);
+                    modifyAdjecncy(a,b, adjF2, parentF2, containsF2);
+
+                    activeLabel[b] = false;
+                }
+            }
+        }
+    }
+
+    adj = adjF1;
+    parent = parentF1;
+    nodeContainer = containsF1;
+
+    F2->adj = adjF2;
+    F2->parent = parentF2;
+    F2->nodeContainer = containsF2; 
+}
+
+void MIPForest::expand() {
+
+    std::vector<int> newParent = parent;
+    std::vector<std::pair<int, int>> newAdj = adj;
+
+    newParent.resize(nodeAmount);
+    newAdj.resize(nodeAmount);
+
+    for(int node = 0; node < nodeAmount; node++) {
+
+        while(not nodeContainer[node].empty()) {
+            ShrinkInfo info = nodeContainer[node].back();
+            nodeContainer[node].pop_back();
+
+            int new_g = newParent[node];
+
+            newParent[info.parent] = new_g;
+            newAdj[info.parent] = {node, info.sibling};
+            
+            // newAdj[node] = {-1, -1};
+            newParent[node] = info.parent;
+            newParent[info.sibling] = info.parent;
+
+            if (new_g != -1) {
+                auto [l, r] = newAdj[new_g];
+                newAdj[new_g] = l == node ? std::make_pair(info.parent, r) : std::make_pair(l, info.parent);
+            }
+        }
+
+    }
+
+    adj = newAdj;
+    parent = newParent;
+}
+
 void MIPForest::addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible) {
     if (not pathIntersection(a,b,c,d) and F->pathIntersection(a,b,c,d)) {
         incompatible.insert(Path(modId(),a, b, c, d));
-
-        // std::cout << a << " " << b << " " << c << " " << d << "\n";
 
         int id = amountOfEdgesForIncomPath.size();
         const int incompatiblePathSize = pathSize(a,b) + pathSize(c,d);
@@ -284,4 +361,25 @@ void MIPForest::addIncompatiblePathPartition(const MIPForest* F, int a, int b, i
         
     if (pathIntersection(a,b,c,d) and not F->pathIntersection(a,b,c,d))  
         incompatible.insert(Path(F->modId(),a, b, c, d));
+}
+
+void MIPForest::modifyAdjecncy(int a, int b, std::vector<std::pair<int, int>> &adj, std::vector<int> &parent, std::vector<std::vector<ShrinkInfo>> &contains) {
+    int p = parent[a];
+    int g = parent[p];
+
+    // Guardamos info de la rotacion
+    contains[a].emplace_back(p, b, g);
+
+    // Modificamos los parents
+    parent[a] = g;
+    parent[b] = -1;
+    parent[p] = -1;
+
+    // Limpiamos el adj de p
+    adj[p] = {-1, -1};
+
+    if (g == -1) return;
+    // Aplicamos la rotacion entre p y a
+    auto [f,s] = adj[g];
+    adj[g] = f == p ? std::make_pair(a, s) : std::make_pair(f, a);
 }

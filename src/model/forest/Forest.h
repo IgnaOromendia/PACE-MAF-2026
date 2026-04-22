@@ -23,8 +23,8 @@ protected:
     int edgesAmount, forestId, nodeAmount, labelsAmount, treeCount, rootId, timer;
 
     std::vector<std::pair<int, int> > adj;
-    std::vector<int> parent, tree, visited, tin, tout, subtreeLeafs, depth;
-    std::vector<bool> edgeAvailable;
+    std::vector<int> parent, tree, visited, tin, tout, subtreeLeafs;
+    std::vector<bool> edgeAvailable, activeLabel;
     std::vector<std::pair<int, int>> edgeToNode;
     std::unordered_map<std::pair<int,int>, int, EdgeHash> nodeToEdge;
     std::unordered_map<std::pair<int,int>, std::vector<int> , EdgeHash> paths;
@@ -47,6 +47,8 @@ public:
     ~Forest();
 
     int id() const;
+
+    void initializeStructures();
 
     // Amounts
     int amountOfLabels() const;

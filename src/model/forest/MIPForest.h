@@ -3,6 +3,12 @@
 
 #include "Forest.h"
 
+struct ShrinkInfo {
+    int parent, sibling, grandparent;
+    ShrinkInfo(int p, int s, int g): parent(p), sibling(s), grandparent(g) {}
+    ShrinkInfo(): ShrinkInfo(-1,-1,-1) {}
+};
+
 struct Triple {
     Triple(int i, int j, int k): i(i), j(j), k(k) {}
     int i,j,k;
@@ -48,9 +54,9 @@ private:
     const double ALPHA  = 1.0;
     const double BETA   = 1.0;
     const double MU     = 0.01;
-    
-    std::unordered_map<int, Triple> tripleMap;
 
+    std::vector<std::vector<ShrinkInfo>> nodeContainer;
+    
     std::vector<char> originalEdge;
 
     std::vector<int> amountOfEdgesForTriple;
@@ -60,6 +66,8 @@ private:
     std::vector<std::unordered_set<int>> incompaiblePathPairsForEdge;
 
     void addIncompatiblePathPartition(const MIPForest* F, int a, int b, int c, int d, std::unordered_set<Path, PathHash> &incompatible);
+
+    void modifyAdjecncy(int a, int b, std::vector<std::pair<int,int>>& adj, std::vector<int>& parent, std::vector<std::vector<ShrinkInfo>>& contains);
 
 public:
     MIPForest(int forestId, int nodeAmount, int amountOfLabels) : Forest(forestId, nodeAmount, amountOfLabels) { originalEdge.assign(nodeAmount-1, 1); };
@@ -92,6 +100,8 @@ public:
     // Forest Operations
     void cut(int node);
     void regraft();
+    void shrinkWith(MIPForest* F2);
+    void expand();
 };
 
 #endif

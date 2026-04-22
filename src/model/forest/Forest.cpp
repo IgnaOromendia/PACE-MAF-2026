@@ -33,7 +33,37 @@ Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<i
 
     this->adj = adj;
     this->parent = parents;
+}
 
+Forest::Forest(const Forest& other) {
+    forestId        = other.forestId;
+    nodeAmount      = other.nodeAmount;
+    labelsAmount    = other.labelsAmount;
+    treeCount       = other.treeCount;
+    adj             = other.adj;
+    parent          = other.parent;
+    tree            = other.tree;
+    rootId          = other.rootId;
+    edgeAvailable   = other.edgeAvailable;
+    edgesAmount     = other.edgesAmount;
+    edgeToNode      = other.edgeToNode;
+    nodeToEdge      = other.nodeToEdge;
+    paths           = other.paths;
+    leafsForEdge    = other.leafsForEdge;
+    tin             = other.tin;
+    tout            = other.tout;
+    subtreeLeafs    = other.subtreeLeafs;
+    activeLabel     = other.activeLabel;
+}
+
+Forest::~Forest() {}
+
+int Forest::id() const {
+    return forestId;
+}
+
+void Forest::initializeStructures() {
+    this->activeLabel.assign(labelsAmount, true);
     this->edgeAvailable.assign(edgesAmount, true);
     this->tree.assign(nodeAmount, -1);
     this->visited.assign(nodeAmount, 0);
@@ -61,32 +91,6 @@ Forest::Forest(int forestId, std::vector<std::pair<int, int>> adj, std::vector<i
     
     tagEdges();
     precomputeAllPaths();
-}
-
-Forest::Forest(const Forest& other) {
-    forestId        = other.forestId;
-    nodeAmount      = other.nodeAmount;
-    labelsAmount    = other.labelsAmount;
-    treeCount       = other.treeCount;
-    adj             = other.adj;
-    parent          = other.parent;
-    tree            = other.tree;
-    rootId          = other.rootId;
-    edgeAvailable   = other.edgeAvailable;
-    edgesAmount     = other.edgesAmount;
-    edgeToNode      = other.edgeToNode;
-    nodeToEdge      = other.nodeToEdge;
-    paths           = other.paths;
-    leafsForEdge    = other.leafsForEdge;
-    tin             = other.tin;
-    tout            = other.tout;
-    subtreeLeafs     = other.subtreeLeafs;
-}
-
-Forest::~Forest() {}
-
-int Forest::id() const {
-    return forestId;
 }
 
 int Forest::amountOfLabels() const {
@@ -194,7 +198,7 @@ bool Forest::onPath(int v, int i, int j) const {
 }
 
 bool Forest::nodeAvailable(int node) const {
-    if (node < labelsAmount) return true;
+    if (node < labelsAmount) return activeLabel[node];
     return adj[node] != std::make_pair(-1,-1);
 }
 
@@ -289,10 +293,12 @@ bool Forest::nodeInRange(int a) const {
 
 void Forest::tagEdges() {
     int edgeCount = 0;
+    edgeToNode.clear();
+    nodeToEdge.clear();
     edgeToNode.reserve(edgesAmount);
     nodeToEdge.reserve(edgesAmount);
     for(int v = 0; v < nodeAmount; v++){
-        if (parent[v] == -1) continue;
+        if (not nodeAvailable(v) or parent[v] == -1) continue;
         edgeToNode.push_back({v, parent[v]});
         nodeToEdge.insert({{v, parent[v]}, edgeCount++});
     }
@@ -320,8 +326,12 @@ void Forest::precomputeAllPaths() {
 }
 
 void Forest::precomputePaths(int limit) {
+    paths.clear();
+
     for (int v = 0; v < limit; v++) {
+        if (not nodeAvailable(v)) continue;
         for (int w = v + 1; w < limit; w++) {
+            if (not nodeAvailable(w)) continue;
             std::vector<int> path;
 
             if (sameConnectedComponent(v,w)) {

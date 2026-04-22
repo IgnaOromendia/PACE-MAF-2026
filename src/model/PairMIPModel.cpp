@@ -97,8 +97,9 @@ void PairMIPModel::setConflictiveTripleConstraint() {
 
 void PairMIPModel::setKnownCutsConstraints() {
     for(int i = 0; i < F1->amountOfLabels(); i++) {
+        if (not F1->nodeAvailable(i)) continue;
         for(int j = i+1; j < F1->amountOfLabels(); j++) {
-            if (F1->sameConnectedComponent(i,j)) continue;
+            if (F1->sameConnectedComponent(i,j) or not F1->nodeAvailable(j)) continue;
 
             // IloExpr expr1(env);
             IloExpr expr2(env);
@@ -126,8 +127,9 @@ void PairMIPModel::setIncompatiblePathsConstraints() {
 
 void PairMIPModel::setAgreementPathLeafConstraint() {
     for(int i = 0; i < F1->amountOfLabels(); i++) {
+        if (not F1->nodeAvailable(i)) continue;
         for(int j = i + 1; j < F1->amountOfLabels(); j++) {
-            if (not F1->sameConnectedComponent(i,j)) continue;
+            if (not F1->sameConnectedComponent(i,j) or not F1->nodeAvailable(j)) continue;
             IloExpr expr(env);
             std::string name = "SamePath_" + std::to_string(i) + "_" + std::to_string(j);
 

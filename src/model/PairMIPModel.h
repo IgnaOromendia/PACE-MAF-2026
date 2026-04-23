@@ -23,6 +23,9 @@ private:
     void setKnownCutsConstraints();
     void setIncompatiblePathsConstraints();
     void setAgreementPathLeafConstraint();
+
+    // Paths
+    void addInitialPathConstraints();
     
     // Constraint Helpers
     void addConflictiveTripleConstraint(const Triple& t);
@@ -45,10 +48,13 @@ public:
     void setObjective() override;
     void solve(bool exportModel = false) override;
 
-    void searchForFractionalIncompatiblePaths(UserCutCallback* callback, std::vector<Path>& constraintToAdd, int maxCuts, double eps);
+    // User cut
+    void searchForFractionalIncompatiblePaths(UserCutCallback* callback, std::priority_queue<Path>& constraintToAdd, int maxCuts);
     double getCallbackDoubleValueFor(UserCutCallback* callback, int forestId, int i, int j) const;
+    void erasePath(const Path& p);
 
-    // Lazy
+
+    // Lazy cut
     bool searchForConflictiveTriples(const LazyCallbackI& callback, std::vector<Triple>& constraintToAdd) override;
     bool searchForIncompatiblePaths(const LazyCallbackI& callback, std::vector<Path>& constraintToAdd) override;
     int getCallbackValueFor(const LazyCallbackI& callback, int forestId, int i, int j) const override;

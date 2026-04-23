@@ -29,11 +29,46 @@ struct TripleHash {
 
 struct Path {
     int tree, i, j, k, l;
+    mutable double constraintScore = 0;
+    mutable double pathScore = 0;
+    mutable bool isViolation = false;
+
     Path(int tree, int i, int j, int k, int l): tree(tree), i(i), j(j), k(k), l(l){}
+    Path(): Path(0,0,0,0,0) {}
 
     bool operator==(const Path& other) const {
         return tree == other.tree and i == other.i and j == other.j and
                k == other.k and l == other.l;
+    }
+
+    bool operator<(const Path& other) const {
+        if (constraintScore != other.constraintScore) return constraintScore > other.constraintScore;
+        if (i != other.i) return i < other.i;
+        if (j != other.j) return j < other.j;
+        if (k != other.k) return k < other.k;
+        return l < other.l;
+    }
+
+    std::string key() const {
+        std::pair<int,int> p1 = std::minmax(i,j), p2 = std::minmax(k,l);
+
+        if (p2 < p1) std::swap(p1, p2);
+
+        return std::to_string(tree) + "_" +
+               std::to_string(p1.first) + "_" + 
+               std::to_string(p1.second) + "_" + 
+               std::to_string(p2.first) + "_" +
+               std::to_string(p2.second);
+    }
+
+    void setViolation(double lhs) const {
+        isViolation = (lhs > 1 + 1e-6);
+        constraintScore = isViolation ? (lhs - 1) * pathScore : 0.0;
+        
+    }
+
+    void setPathScore(double s) const {
+        pathScore = s;
     }
 };
 

@@ -14,9 +14,16 @@ MIPModel::MIPModel(MIPForest *F1, MIPForest *F2) {
     primalHeuristicVals = IloNumArray(env);
 
     // PARAMS
-    solver.setOut(env.getNullStream());
+    // solver.setOut(env.getNullStream());
     solver.setParam(IloCplex::Param::Threads, 1);
     solver.setParam(IloCplex::Param::Emphasis::MIP, IloCplex::MIPEmphasisFeasibility);
+    // solver.setParam(IloCplex::Param::MIP::Strategy::Search, IloCplex::Traditional);
+    // solver.setParam(IloCplex::Param::MIP::Strategy::NodeSelect, 1); // best bound
+    // solver.setParam(IloCplex::Param::MIP::Strategy::VariableSelect, 3); // strong branching
+    // solver.setParam(IloCplex::Param::MIP::Cuts::Gomory, 2);
+    // solver.setParam(IloCplex::Param::MIP::Cuts::MIRCut, 2);
+    // solver.setParam(IloCplex::Param::MIP::Cuts::FlowCovers, 2);
+    // solver.setParam(IloCplex::Param::MIP::Cuts::Cliques, 2);
     // solver.setParam(IloCplex::Param::MIP::Tolerances::MIPGap, 0.1);
     // solver.setParam(IloCplex::Param::TimeLimit, 30.0);
 }
